@@ -10,7 +10,7 @@ Install Flask-PyMongo :
   pip install Flask-PyMongo
 
 Setup the environment variables :
-  export FLASK_APP=flask_api
+  export FLASK_APP=flask_api.py
 
   export FLASK_API_DB_URL=mongodb://localhost:27017/<yourcollection>>
   Note : databaseUrl is optional, if not used the application will connect to mongodb://localhost:27017/flask

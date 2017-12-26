@@ -10,6 +10,11 @@ import statistics
 def home_page():
   return render_template('index.html', url_root=request.url_root)
 
+# Default json result
+# Note : consumers may prefer not having that 'result' wrap around the result
+def returnJsonResult(result):
+  return jsonify({'result' : result})
+
 def append_songs(songs):
   output = []
   for s in songs:
@@ -29,7 +34,7 @@ def update_response_header(response, count, page_size, page_num):
   # count header
   response.headers['X-total-count'] = count
 
-  app.logger.info('Getting the songs with page size : %s', request)
+  app.logger.info('Getting the songs with page size : %s', count)
 
   # links next / last / first / prev
   links = []
@@ -53,8 +58,7 @@ def songs():
   page_num = request.args.get('page_num', 1, type=int)
   app.logger.info('Getting the songs with page size : %s and page_num : %s', page_size, page_num)
   result = skip_limit(song.find(), page_size, page_num)
-  appended_songs = append_songs(result)
-  resp = jsonify({'result' : appended_songs})
+  resp = returnJsonResult(append_songs(result))
   update_response_header(resp, song.count(), page_size, page_num)
   return resp
 
@@ -67,7 +71,7 @@ def average_difficulty(level=None):
       average = computeAverageDifficulty(song.find())
   else:
       average = computeAverageDifficulty(song.find({ "level": level }))
-  return jsonify({'result' : average})
+  return returnJsonResult(average)
 
 def computeAverageDifficulty(songs):
     if songs.count() == 0:
@@ -81,13 +85,13 @@ def computeAverageDifficulty(songs):
 @app.route('/songs/search')
 def search():
   message = request.args.get('message')
-  app.logger.info('Search the songs containing the message %s', message)
+  app.logger.info('Get the songs containing the message %s', message)
   if message == None:
-    return jsonify({'result' : "Error, message argument missing!"})
+    raise BadRequestException("'message' parameter is missing ! Please provide one. Example : /songs/search?message=you")
   song = mongo.db.songs
   regx = re.compile(message, re.IGNORECASE)
   songs = song.find({"$or": [{ "title": regx}, {"artist": regx }]})
-  return jsonify({'result' : append_songs(songs)})
+  return returnJsonResult(append_songs(songs))
 
 # POST /songs/rating
 # Note : we may want to apply a limitation on the precision for rating in the future
@@ -101,13 +105,12 @@ def rate_song():
   app.logger.info('Rating the song %s with %s', song_id, rating)
 
   # rating should be between 1 and 5
-  # TODO replace that with a proper error response
   if rating < 1 or rating > 5:
-      return jsonify({'result' : "Error rating should be between 1 and 5 !"})
+    raise BadRequestException("Rating should be between 1 and 5")
 
   current_song = song.find_one({"_id": song_id})
   if current_song is None:
-    return jsonify({'result' : "Error no song found for id "+song_id+"!"})
+    raise SongNotFoundException(str(song_id))
 
   update_result = song.update_one(
     {"_id": song_id},
@@ -115,7 +118,7 @@ def rate_song():
         "ratings": rating
     }})
 
-  return jsonify({'result' : str(update_result.raw_result)})
+  return returnJsonResult(str(update_result.raw_result))
 
 # GET /songs/avg/rating/<string:song_id>
 @app.route('/songs/avg/rating/')
@@ -127,9 +130,35 @@ def rating(song_id):
 
   current_song = song.find_one({"_id": bson.ObjectId(song_id)})
   if current_song is None:
-    return jsonify({'result' : "Error no song found for this id "+song_id+" !"})
+    raise SongNotFoundException(song_id)
 
   ratings = current_song.get('ratings', [])
   if len(ratings) == 0:
-    return jsonify({'result' : "No rating for that song at the moment !"})
-  return jsonify({'result' : statistics.mean(ratings)})
+    #Note : 404 might be not the most accurate error to give back for that case
+    raise ResourceNotFoundException("no rating found for the song "+song_id)
+
+  return returnJsonResult(statistics.mean(ratings))
+
+# Error handling
+class ResourceNotFoundException(Exception):
+  pass
+
+class SongNotFoundException(ResourceNotFoundException):
+  def __init__(self, song_id):
+    self.message = "no song found for the id "+song_id
+    super().__init__(self.message)
+
+@app.errorhandler(ResourceNotFoundException)
+def resource_not_found(e):
+    return 'Resource not found : ' + str(e), 404
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html', url_root=request.url_root), 404
+
+class BadRequestException(Exception):
+    pass
+
+@app.errorhandler(BadRequestException)
+def handle_bad_request(e):
+    return 'Bad request : ' + str(e), 400
