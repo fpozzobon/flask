@@ -16,8 +16,11 @@ Setup the environment variables :
   Note : databaseUrl is optional, if not used the application will connect to mongodb://localhost:27017/flask
 
 Populate the database :
-  flask initdb <databaseUrl>
+  flask initdb
 Note : the database won't be populated if there is already some documents in songs collection
+
+Clean the database (empty songs collection):
+  flask cleandb
 
 Run the project :
   python flask_api.py or flask run

@@ -24,7 +24,18 @@ def initdb():
     song = mongo.db.songs
     if song.count() == 0:
       with current_app.open_resource('static/songs.json', mode="r") as f:
-        for line in f:
-          song.insert(json.loads(line))
+        song.insert_many(json.loads(line) for line in f)
+      click.echo("Created " + str(song.count()) + "songs.")
+      # Note we could probably put that to unique, also the weight is 10:1 for artist
+      song.create_index( [('artist', 'text'), ('title', 'text')],
+                        name="artist and title index", unique=False, weights={'artist': 10 } )
+    else:
+      click.echo("Songs collection already contains data, please clean it first.")
+
+@app.cli.command()
+def cleandb():
+    """Remove songs collection."""
+    click.echo('Remove songs collection.')
+    mongo.db.songs.drop()
 
 from app import routes

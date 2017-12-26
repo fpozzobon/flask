@@ -89,8 +89,12 @@ def search():
   if message == None:
     raise BadRequestException("'message' parameter is missing ! Please provide one. Example : /songs/search?message=you")
   song = mongo.db.songs
-  regx = re.compile(message, re.IGNORECASE)
-  songs = song.find({"$or": [{ "title": regx}, {"artist": regx }]})
+  # we use first the $text search as it's more efficient the drawback is that it search on the whole word
+  songs = song.find({ "$text": { "$search": message, "$caseSensitive": False, "$diacriticSensitive": False}})
+  # so if we don't find anything, we do a less efficient search on the partial words
+  if songs.count() == 0:
+    regx = re.compile(message, re.IGNORECASE)
+    songs = song.find({"$or": [{ "title": regx}, {"artist": regx }]})
   return returnJsonResult(append_songs(songs))
 
 # POST /songs/rating
