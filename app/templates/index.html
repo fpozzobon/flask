@@ -18,13 +18,13 @@
     </ul>
 
     <ul>
-      <li>GET /songs/avg/difficulty</li>
+      <li><a href="{{ url_root }}songs/avg/difficulty">GET /songs/avg/difficulty</a></li>
       <ul><li>Takes an optional parameter "level" to select only songs from a specific level.</li></ul>
       <ul><li>Returns the average difficulty for all songs.</li></ul>
     </ul>
 
     <ul>
-      <li>GET /songs/search</li>
+      <li><a href="{{ url_root }}songs/search">GET /songs/search</a></li>
       <ul><li>Takes in parameter a 'message' string to search.</li></ul>
       <ul><li>Return a list of songs. The search should take into account song's artist and title.</li></ul>
     </ul>
@@ -36,7 +36,7 @@
     </ul>
 
     <ul>
-      <li>GET /songs/avg/rating/</li>
+      <li><a href="{{ url_root }}songs/avg/rating/">GET /songs/avg/rating/&#60song_id&#62</a></li>
       <ul><li>Returns the average, the lowest and the highest rating of the given song id.</li></ul>
     </ul>
 
