@@ -1,0 +1,40 @@
+<html>
+  <head>
+    <title>Flask API - Test</title>
+  </head>
+  <body bgcolor=white>
+
+    <h1>Below the URLs accessibles for the API</h1>
+     (ideally should be generated via swagger or something else)
+
+    <ul>
+      <li>GET /songs </li>
+      <ul><li>Returns a list of songs with some details on them</li></ul>
+      <ul><li>Add possibility to paginate songs.</li></ul>
+    </ul>
+
+    <ul>
+      <li>GET /songs/avg/difficulty</li>
+      <ul><li>Takes an optional parameter "level" to select only songs from a specific level.</li></ul>
+      <ul><li>Returns the average difficulty for all songs.</li></ul>
+    </ul>
+
+    <ul>
+      <li>GET /songs/search</li>
+      <ul><li>Takes in parameter a 'message' string to search.</li></ul>
+      <ul><li>Return a list of songs. The search should take into account song's artist and title.</li></ul>
+    </ul>
+
+    <ul>
+      <li>POST /songs/rating</li>
+      <ul><li>Takes in parameter a "song_id" and a "rating"</li></ul>
+      <ul><li>This call adds a rating to the song. Ratings should be between 1 and 5.</li></ul>
+    </ul>
+
+    <ul>
+      <li>GET /songs/avg/rating/</li>
+      <ul><li>Returns the average, the lowest and the highest rating of the given song id.</li></ul>
+    </ul>
+
+  </body>
+</html>
