@@ -8,9 +8,12 @@
      (ideally should be generated via swagger or something else)
 
     <ul>
-      <li>GET /songs </li>
+      <li><a href="{{ url_root }}songs">GET /songs</a></li>
       <ul><li>Returns a list of songs with some details on them</li></ul>
-      <ul><li>Add possibility to paginate songs.</li></ul>
+      <ul><li>Possibility to paginate by adding the parameters page_size and page_num</li></ul>
+      <ul><li>Page_size is 3 by default</li></ul>
+      <ul><li>Gives back in the header X-total-count of the total number of documents</li></ul>
+      <ul><li>Gives back in the header Link url to the first / next / prev / last pages if available</li></ul>
     </ul>
 
     <ul>
