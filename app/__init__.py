@@ -17,14 +17,16 @@ with app.app_context():
   mongo = configureDatabase()
 
 @app.cli.command()
-def initdb():
+@click.option('--nbloops', default=1, help='number of loops through the file to load')
+def initdb(nbloops):
     """Initialize the database."""
     click.echo('Init the db')
     # populate the songs from static/songs.json if song collection is empty
     song = mongo.db.songs
     if song.count() == 0:
-      with current_app.open_resource('static/songs.json', mode="r") as f:
-        song.insert_many(json.loads(line) for line in f)
+      for i in range(nbloops):
+        with current_app.open_resource('static/songs.json', mode="r") as f:
+          song.insert_many(json.loads(line) for line in f)
       click.echo("Created " + str(song.count()) + "songs.")
       # Note we could probably put that to unique, also the weight is 10:1 for artist
       song.create_index( [('artist', 'text'), ('title', 'text')],
