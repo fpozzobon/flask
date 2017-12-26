@@ -14,9 +14,10 @@ with app.app_context():
     mongo = configureDatabase()
 
     song = mongo.db.songs
-    if song.count() == 0:
-        with current_app.open_resource('static/songs.json', mode="r") as f:
-            for line in f:
-                song.insert(json.loads(line))
+    # TODO move it
+    # if song.count() == 0:
+        # with current_app.open_resource('static/songs.json', mode="r") as f:
+            # for line in f:
+                # song.insert(json.loads(line))
 
 from app import routes

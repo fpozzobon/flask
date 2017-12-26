@@ -9,9 +9,10 @@
 
     <ul>
       <li><a href="{{ url_root }}songs">GET /songs</a></li>
+      <ul><li><a href="{{ url_root }}songs?page_num=2&page_size=3">GET /songs with pagination</a></li></ul>
       <ul><li>Returns a list of songs with some details on them</li></ul>
       <ul><li>Possibility to paginate by adding the parameters page_size and page_num</li></ul>
-      <ul><li>Page_size is 3 by default</li></ul>
+      <ul><li>Page_size is 20 by default</li></ul>
       <ul><li>Gives back in the header X-total-count of the total number of documents</li></ul>
       <ul><li>Gives back in the header Link url to the first / next / prev / last pages if available</li></ul>
     </ul>

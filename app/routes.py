@@ -11,7 +11,7 @@ def home_page():
 def append_songs(songs):
   output = []
   for s in songs:
-    output.append({'id': str(s['_id']), 'artist' : s['artist'], 'title' : s['title']})
+    output.append({'_id': str(s['_id']), 'artist' : s['artist'], 'title' : s['title']})
   return output
 
 def skip_limit(db_find, page_size, page_num):
@@ -42,7 +42,7 @@ def update_response_header(response, count, page_size, page_num):
   response.headers['Link'] = ', '.join(links)
 
 
-DEFAULT_PER_PAGE = 3
+DEFAULT_PER_PAGE = 20
 # GET /songs
 @app.route('/songs')
 def songs():
@@ -53,5 +53,5 @@ def songs():
   result = skip_limit(song.find(), page_size, page_num)
   appended_songs = append_songs(result)
   resp = jsonify({'result' : appended_songs})
-  update_response_header(resp, result.count(), page_size, page_num)
+  update_response_header(resp, song.count(), page_size, page_num)
   return resp
