@@ -1,8 +1,7 @@
-from app import app, mongo
+from app import app, songService
 from flask import render_template, jsonify, request
 import math
-import re, bson
-import statistics
+from app.exceptions import ResourceNotFoundException, SongNotFoundException, BadRequestException
 
 # GET /
 @app.route('/')
@@ -21,10 +20,6 @@ def append_songs(songs):
     output.append({'_id': str(s['_id']), 'artist' : s['artist'], 'title' : s['title']})
   return output
 
-def skip_limit(db_find, page_size, page_num):
-  skips = page_size * (page_num - 1)
-  return db_find.skip(skips).limit(page_size)
-
 def build_link(page_size, page_num, rel):
   return "<%(url)s?page_size=%(size)d&page_num=%(num)d>; rel='%(rel)s'" % {'url':request.base_url, 'size':page_size, 'num':page_num, 'rel':rel}
 
@@ -33,8 +28,6 @@ def build_link(page_size, page_num, rel):
 def update_response_header(response, count, page_size, page_num):
   # count header
   response.headers['X-total-count'] = count
-
-  app.logger.debug('Getting the songs with page size : %s', count)
 
   # links next / last / first / prev
   links = []
@@ -53,74 +46,42 @@ DEFAULT_PER_PAGE = 20
 # GET /songs
 @app.route('/songs')
 def songs():
-  song = mongo.db.songs
   page_size = request.args.get('page_size', DEFAULT_PER_PAGE, type=int)
   page_num = request.args.get('page_num', 1, type=int)
-  app.logger.debug('Getting the songs with page size : %s and page_num : %s', page_size, page_num)
-  result = skip_limit(song.find(), page_size, page_num)
-  resp = returnJsonResult(append_songs(result))
-  update_response_header(resp, song.count(), page_size, page_num)
+
+  songList = songService.getList(page_size, page_num)
+  resp = returnJsonResult(append_songs(songList['data']))
+  update_response_header(resp, songList['count'], page_size, page_num)
   return resp
 
 # GET /songs/avg/difficulty
 @app.route('/songs/avg/difficulty')
 @app.route('/songs/avg/difficulty/<int:level>')
 def average_difficulty(level=None):
-  song = mongo.db.songs
-  if level is None:
-      average = computeAverageDifficulty(song.find())
-  else:
-      average = computeAverageDifficulty(song.find({ "level": level }))
-  return returnJsonResult(average)
-
-def computeAverageDifficulty(songs):
-    if songs.count() == 0:
-        return 0
-    sum = 0
-    for s in songs:
-        sum += s['difficulty']
-    return sum / songs.count()
+  return returnJsonResult(songService.averageDifficulty(level))
 
 # GET /songs/search
 @app.route('/songs/search')
 def search():
   message = request.args.get('message')
-  app.logger.debug('Get the songs containing the message %s', message)
   if message == None:
     raise BadRequestException("'message' parameter is missing ! Please provide one. Example : /songs/search?message=you")
-  song = mongo.db.songs
-  # we use first the $text search as it's more efficient the drawback is that it search on the whole word
-  songs = song.find({ "$text": { "$search": message, "$caseSensitive": False, "$diacriticSensitive": False}})
-  # so if we don't find anything, we do a less efficient search on the partial words
-  if songs.count() == 0:
-    regx = re.compile(message, re.IGNORECASE)
-    songs = song.find({"$or": [{ "title": regx}, {"artist": regx }]})
-  return returnJsonResult(append_songs(songs))
+
+  return returnJsonResult(append_songs(songService.search(message)))
 
 # POST /songs/rating
 # Note : we may want to apply a limitation on the precision for rating in the future
 # TODO validate if we want to add a timestamp to each rating
 @app.route('/songs/rating', methods=['POST'])
 def rate_song():
-  song = mongo.db.songs
-  song_id = bson.ObjectId(request.json['song_id'])
   rating = request.json['rating']
-
-  app.logger.debug('Rating the song %s with %s', song_id, rating)
+  song_id = request.json['song_id']
 
   # rating should be between 1 and 5
   if rating < 1 or rating > 5:
     raise BadRequestException("Rating should be between 1 and 5")
 
-  current_song = song.find_one({"_id": song_id})
-  if current_song is None:
-    raise SongNotFoundException(str(song_id))
-
-  update_result = song.update_one(
-    {"_id": song_id},
-    {"$push": {
-        "ratings": rating
-    }})
+  update_result = songService.rateSong(song_id, rating)
 
   if update_result.raw_result['updatedExisting']:
     return "Error when updating %(id)s, %(msg)s" % {'id': str(song_id), 'msg':update_result.raw_result}, 500
@@ -130,29 +91,9 @@ def rate_song():
 @app.route('/songs/avg/rating/')
 @app.route('/songs/avg/rating/<string:song_id>')
 def rating(song_id):
-  song = mongo.db.songs
-
-  app.logger.debug('Get the rating of the song %s', song_id)
-
-  current_song = song.find_one({"_id": bson.ObjectId(song_id)})
-  if current_song is None:
-    raise SongNotFoundException(song_id)
-
-  ratings = current_song.get('ratings', [])
-  if len(ratings) == 0:
-    #Note : 404 might be not the most accurate error to give back for that case
-    raise ResourceNotFoundException("no rating found for the song "+song_id)
-
-  return returnJsonResult(statistics.mean(ratings))
+  return returnJsonResult(songService.rating(song_id))
 
 # Error handling
-class ResourceNotFoundException(Exception):
-  pass
-
-class SongNotFoundException(ResourceNotFoundException):
-  def __init__(self, song_id):
-    self.message = "no song found for the id %s" % song_id
-    super().__init__(self.message)
 
 @app.errorhandler(ResourceNotFoundException)
 def resource_not_found(e):
@@ -161,9 +102,6 @@ def resource_not_found(e):
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html', url_root=request.url_root), 404
-
-class BadRequestException(Exception):
-    pass
 
 @app.errorhandler(BadRequestException)
 def handle_bad_request(e):

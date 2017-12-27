@@ -2,7 +2,7 @@ import os
 import click
 from flask import Flask, json, current_app, g
 from flask_pymongo import PyMongo
-import sys
+from app.song_service import SongService
 
 DEFAULT_DATABASE_URL = 'mongodb://localhost:27017/flask'
 
@@ -15,6 +15,7 @@ def configureDatabase():
 
 with app.app_context():
   mongo = configureDatabase()
+  songService = SongService(mongo.db.songs, app.logger)
 
 @app.cli.command()
 @click.option('--nbloops', default=1, help='number of loops through the file to load')
