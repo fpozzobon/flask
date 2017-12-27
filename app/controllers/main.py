@@ -96,7 +96,6 @@ def rate_song():
   return returnJsonResult(str(update_result.raw_result))
 
 # GET /songs/avg/rating/<string:song_id>
-@main.route('/songs/avg/rating/')
 @main.route('/songs/avg/rating/<string:song_id>')
 def rating(song_id):
   return returnJsonResult(getSongService().rating(song_id))

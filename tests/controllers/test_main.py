@@ -19,22 +19,22 @@ def createNSongs(n):
     result.append(createSong(str(i)))
   return result
 
+def mockSongService(app):
+  with app.app_context():
+    songService = app.config['songService'] = MagicMock()
+    return songService
+
+def getResult(rv):
+  return json.loads(rv.data)['result']
+
 @pytest.mark.usefixtures("app")
 class TestMainSongs:
   """ Test /songs route """
 
-  def mockSongService(self, app):
-    with app.app_context():
-      songService = app.config['songService'] = MagicMock()
-      return songService
-
   def mockGetList(self, app, data, count):
-    songService = self.mockSongService(app)
+    songService = mockSongService(app)
     songService.getList.return_value = {'data':data,'count':count}
     return songService
-
-  def getResult(self, rv):
-    return json.loads(rv.data)['result']
 
   def test_empty_db(self, app):
     """ Verify that we get a result from an empty database """
@@ -43,7 +43,7 @@ class TestMainSongs:
     songService = self.mockGetList(app, [], 0)
 
     rv = testapp.get('/songs')
-    actual = self.getResult(rv)
+    actual = getResult(rv)
     assert 0 == len(actual)
     assert [] == actual
 
@@ -76,7 +76,7 @@ class TestMainSongs:
     # test
     rv = testapp.get('/songs')
     # verification
-    actual = self.getResult(rv)
+    actual = getResult(rv)
     assert expectedSongs == actual
 
   def test_returns_count_header(self, app):
@@ -90,3 +90,95 @@ class TestMainSongs:
     # verification
     actual = rv.headers['X-total-count']
     assert str(expectedCount) == actual
+
+@pytest.mark.usefixtures("app")
+class TestMainAverageDifficulty:
+  """ Test /songs/avg/difficulty route """
+
+  def mockAverageDifficulty(self, app, return_value):
+    songService = mockSongService(app)
+    songService.averageDifficulty.return_value = return_value
+    return songService
+
+  def test_difficulty_without_level(self, app):
+    """ Verify that we get the difficulty without level param """
+    # setup
+    testapp = app.test_client()
+    expectedAverage = 6
+    songService = self.mockAverageDifficulty(app, expectedAverage)
+    # test
+    rv = testapp.get('/songs/avg/difficulty')
+    # verification
+    actual = getResult(rv)
+    assert expectedAverage == actual
+    songService.averageDifficulty.assert_called_with(None)
+
+  def test_difficulty_with_level(self, app):
+    """ Verify that we get the difficulty for a level param """
+    # setup
+    testapp = app.test_client()
+    expectedAverage = 6
+    expectedLevel = 5
+    songService = self.mockAverageDifficulty(app, expectedAverage)
+    # test
+    rv = testapp.get('/songs/avg/difficulty/'+str(expectedLevel))
+    # verification
+    actual = getResult(rv)
+    assert expectedAverage == actual
+    songService.averageDifficulty.assert_called_with(expectedLevel)
+
+@pytest.mark.usefixtures("app")
+class TestMainSearch:
+  """ Test /songs/search route """
+
+  def mockSearch(self, app, return_value):
+    songService = mockSongService(app)
+    songService.search.return_value = return_value
+    return songService
+
+  def test_search_message(self, app):
+    """ Verify that we get the songs filtered on a message """
+    # setup
+    testapp = app.test_client()
+    expectedMessage = "A Message"
+    expectedSongs = createNSongs(152)
+    songService = self.mockSearch(app, expectedSongs)
+    # test
+    rv = testapp.get('/songs/search?message='+expectedMessage)
+    # verification
+    actual = getResult(rv)
+    assert expectedSongs == actual
+    songService.search.assert_called_with(expectedMessage)
+
+  def test_search_message_without_arg(self, app):
+    """ Verify that we get a 400 response if no message """
+    # setup
+    testapp = app.test_client()
+    songService = self.mockSearch(app, None)
+    # test
+    rv = testapp.get('/songs/search')
+    # verification
+    assert "<Response streamed [400 BAD REQUEST]>" == str(rv)
+
+@pytest.mark.usefixtures("app")
+class TestMainRating:
+  """ Test /songs/avg/rating/<string:song_id> route """
+
+  def mockRating(self, app, return_value):
+    songService = mockSongService(app)
+    songService.rating.return_value = return_value
+    return songService
+
+  def test_rating(self, app):
+    """ Verify that we get the rating and call the service correctly """
+    # setup
+    testapp = app.test_client()
+    expectedRating = 4.56
+    expectedId = "anyId"
+    songService = self.mockRating(app, expectedRating)
+    # test
+    rv = testapp.get('/songs/avg/rating/'+expectedId)
+    # verification
+    actual = getResult(rv)
+    assert expectedRating == actual
+    songService.rating.assert_called_with(expectedId)
