@@ -1,13 +1,24 @@
 # flask API
 Implementation of a simple flask API using MongoDB.
 
-## Dependencies
+## Pre requirements
 Install and run MongoDB
-Install Python (idealy python 3)
+Install Python (idealy Python 3)
 
 ## Quickstart
-Install Flask-PyMongo :
-  pip install Flask-PyMongo
+Use the Makefile
+
+  Or
+
+Install env :
+  easy_install pip && \
+  pip install virtualenv && \
+  virtualenv env && \
+  . env/bin/activate && \
+  make deps
+
+Install dependencies :
+  pip install -r requirements.txt
 
 Setup the environment variables :
   export FLASK_APP=flask_initdb.py
@@ -29,7 +40,7 @@ Run the project :
 Finally open in your browser http://127.0.0.1:5000.
 
 ## Unit Tests
-Install mongomock :
-    pip install mongomock
-Run the tests :
-    python flask_api_tests.py
+Run the unit tests :
+    py.test tests
+Run the integration-'ish' tests : (only /songs is tested)
+    python flask_integration_tests.py
