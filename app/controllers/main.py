@@ -6,7 +6,9 @@ from flask import current_app
 main = Blueprint('main', __name__)
 
 def getSongService():
-  songService = current_app.config['songService']
+  songService = current_app.config.get('songService')
+  if songService == None:
+    raise Exception("SongService missing from current_app.config['songService'] !")
   return songService
 
 # GET /
