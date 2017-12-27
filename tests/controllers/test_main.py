@@ -2,13 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-import mock
-from unittest.mock import MagicMock, PropertyMock, Mock
-import sys
-import unittest
-from flask import json, current_app
-
-create_user = True
+from unittest.mock import MagicMock
+from flask import json
 
 def createSong(id):
   return {'_id': id, 'artist': "artist" + id, 'title': "title" + id}
