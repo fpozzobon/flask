@@ -1,7 +1,12 @@
 import click
 import flask_pymongo
-from flask import json
-from app import app, mongo
+from flask import json, current_app, Flask
+from app.db_config import configureDatabase
+
+app = Flask(__name__)
+
+with app.app_context():
+  mongo = configureDatabase(app)
 
 def createIndexes(song):
   click.echo('Creating indexes')

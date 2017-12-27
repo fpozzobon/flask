@@ -9,7 +9,7 @@ sys.modules['flask_pymongo'] = mockedMongo
 import unittest
 from flask import json
 
-import flask_api
+from flask_api import create_app
 
 def createSong(id):
   return {'_id': id, 'artist': "artist" + id, 'title': "title" + id}
@@ -29,8 +29,9 @@ def insertNSongsInDb(n):
 class getSongsTestCases(unittest.TestCase):
 
   def setUp(self):
-    flask_api.app.testing = True
-    self.app = flask_api.app.test_client()
+    app = create_app()
+    app.testing = True
+    self.app = app.test_client()
 
   def tearDown(self):
     mockedMongoClient.db.songs.remove()
