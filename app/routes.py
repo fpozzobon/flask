@@ -83,7 +83,7 @@ def rate_song():
 
   update_result = songService.rateSong(song_id, rating)
 
-  if update_result.raw_result['updatedExisting']:
+  if not update_result.raw_result['updatedExisting']:
     return "Error when updating %(id)s, %(msg)s" % {'id': str(song_id), 'msg':update_result.raw_result}, 500
   return returnJsonResult(str(update_result.raw_result))
 
