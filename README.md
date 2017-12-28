@@ -68,6 +68,5 @@ $ python flask_integration_tests.py
 * [Optimisation] : use $avg on mongodb query
 * [Optimisation] : use cache on main controller
 * [Marshalling] : use restfull marshaller
-* [Marshalling] : return the other properties from songs
 * [Database] : parse release date as a Date
 * [Tests] : cover all the tests

@@ -6,7 +6,15 @@ from unittest.mock import MagicMock
 from flask import json
 
 def createSong(id):
-  return {'_id': id, 'artist': "artist" + id, 'title': "title" + id}
+  return {
+          '_id': id,
+          'artist': "artist%s"%id,
+          'title': "title%s"%id,
+          'level': "level%s"%id,
+          'difficulty': "difficulty%s"%id,
+          'released': "released%s"%id,
+          'ratings': []
+        }
 
 def createNSongs(n):
   result = []

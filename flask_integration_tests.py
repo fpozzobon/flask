@@ -10,21 +10,10 @@ import unittest
 from flask import json
 
 from flask_api import create_app
+from app.view.song import formatSong, append_songs
+from tests.utils import insertNSongsInDb
 
-def createSong(id):
-  return {'_id': id, 'artist': "artist" + id, 'title': "title" + id}
-
-def createNSongs(n):
-  result = []
-  for i in range(n):
-    result.append(createSong(str(i)))
-  return result
-
-def insertNSongsInDb(n):
-  expectedResult = createNSongs(n)
-  for song in expectedResult:
-    mockedMongoClient.db.songs.insert(song)
-  return expectedResult
+mockedSongCollection=mockedMongoClient.db.songs
 
 class getSongsTestCases(unittest.TestCase):
 
@@ -56,7 +45,7 @@ class getSongsTestCases(unittest.TestCase):
   # Verify that we get a result on page 1
   def test_db_not_empty(self):
     expectedPageSize = 15
-    expectedResult = insertNSongsInDb(30)
+    expectedResult = insertNSongsInDb(30, mockedSongCollection)
 
     rv = self.app.get('/songs?page_size=' + str(expectedPageSize))
     actual = self.getResult(rv)
@@ -69,7 +58,7 @@ class getSongsTestCases(unittest.TestCase):
     expectedPageSize = 3
     expectedPageNum = 5
     expectedSkip=expectedPageSize*(expectedPageNum-1)
-    expectedResult = insertNSongsInDb(50)
+    expectedResult = insertNSongsInDb(50, mockedSongCollection)
 
     rv = self.app.get('/songs?page_num='+str(expectedPageNum)+'&page_size=' + str(expectedPageSize))
     actual = self.getResult(rv)
@@ -81,7 +70,7 @@ class getSongsTestCases(unittest.TestCase):
   def test_count_header(self):
     # Setup
     expectedCount = 50
-    expectedResult = insertNSongsInDb(expectedCount)
+    expectedResult = insertNSongsInDb(expectedCount, mockedSongCollection)
     # Test
     rv = self.app.get('/songs?page_num=2&page_size=5')
     # Verification

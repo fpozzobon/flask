@@ -2,6 +2,7 @@ from flask import current_app, Blueprint, render_template, jsonify, request
 from flask_restful import Resource, Api, reqparse, abort, fields, marshal_with
 import math
 from app.exceptions import BadRequestException
+from app.view.song import formatSong, append_songs
 
 main = Blueprint('main', __name__)
 api = Api(main)
@@ -20,13 +21,7 @@ def home_page():
 # Default json result
 # Note : consumers may prefer not having that 'result' wrap around the result
 def returnJsonResult(result):
-  return jsonify({'result' : result})
-
-def append_songs(songs):
-  output = []
-  for s in songs:
-    output.append({'_id': str(s['_id']), 'artist' : s['artist'], 'title' : s['title']})
-  return output
+  return {'result' : result}
 
 def build_link(page_size, page_num, rel):
   return "<%(url)s?page_size=%(size)d&page_num=%(num)d>; rel='%(rel)s'" % {'url':request.base_url, 'size':page_size, 'num':page_num, 'rel':rel}
@@ -55,7 +50,7 @@ class GetSongs(Resource):
     page_num = request.args.get('page_num', 1, type=int)
     songList = getSongService().getList(page_size, page_num)
     resp = append_songs(songList['data'])
-    return {'result':resp}, 200, build_response_header(songList['count'],page_size,page_num)
+    return returnJsonResult(resp), 200, build_response_header(songList['count'],page_size,page_num)
 
 api.add_resource(GetSongs, '/songs')
 
