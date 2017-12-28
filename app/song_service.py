@@ -1,7 +1,6 @@
 import re, bson
 from app.exceptions import SongNotFoundException, ResourceNotFoundException
 from app.extensions import cache
-import statistics
 
 CACHE_TIMEOUT = 500
 
@@ -22,21 +21,18 @@ class SongService():
     count = data.count()
     return {'data':list(data), 'count':count}
 
-  def computeAverageDifficulty(self, songs):
-      if songs.count() == 0:
-          return 0
-      sum = 0
-      for s in songs:
-          sum += s['difficulty']
-      return sum / songs.count()
-
   @cache.memoize(timeout=CACHE_TIMEOUT)
   def averageDifficulty(self, level=None):
+    averageQuery = {'$project': {'avg': {'$avg':'$difficulty'}}}
     if level is None:
-      data = self.songCollection.find()
+      data = list(self.songCollection.aggregate([averageQuery]))
     else:
-      data = self.songCollection.find({ "level": level })
-    return self.computeAverageDifficulty(data)
+      matchQuery = {'$match': {'level': level}}
+      data = list(self.songCollection.aggregate([matchQuery,averageQuery]))
+    if len(data) == 0:
+      return None
+    else:
+      return data[0]['avg']
 
   def searchWithTextIndex(self, message):
     return self.songCollection.find({ "$text": { "$search": message, "$caseSensitive": False, "$diacriticSensitive": False}})
@@ -74,11 +70,12 @@ class SongService():
   @cache.memoize(timeout=CACHE_TIMEOUT)
   def rating(self, song_id):
     self.logger.debug('Get the rating of the song %s', song_id)
-    current_song = self.find(song_id)
 
-    ratings = current_song.get('ratings', [])
-    if len(ratings) == 0:
+    averageQuery = {'$project': {'avg': {'$avg':'$ratings'}}}
+    matchQuery = {'$match': {'_id': bson.ObjectId(song_id)}}
+    data = list(self.songCollection.aggregate([matchQuery,averageQuery]))
+    if len(data) == 0:
       #Note : 404 might be not the most accurate error to give back for that case
       raise ResourceNotFoundException("no rating found for the song "+song_id)
 
-    return statistics.mean(ratings)
+    return data[0]['avg']

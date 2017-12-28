@@ -65,7 +65,6 @@ $ python flask_integration_tests.py
 
 ### Possible enhancements
 
-* [Optimisation] : use $avg on mongodb query
 * [Optimisation] : use cache on main controller
 * [Marshalling] : use restfull marshaller
 * [Database] : parse release date as a Date
