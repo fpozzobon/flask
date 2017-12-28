@@ -4,8 +4,13 @@ from app.controllers.main import main
 from app.db_config import configureDatabase
 from app.exceptions import ResourceNotFoundException, SongNotFoundException, BadRequestException
 
+from app.extensions import cache
+
 def create_app():
   app = Flask(__name__)
+
+  # initialize the cache
+  cache.init_app(app,config={'CACHE_TYPE': 'simple'})
 
   # Error handling
   @app.errorhandler(ResourceNotFoundException)

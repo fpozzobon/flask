@@ -5,7 +5,7 @@ import pytest
 import unittest
 from unittest.mock import MagicMock
 import mongomock
-from app import SongService
+from app import SongService, create_app
 mockedMongoClient=mongomock.MongoClient()
 
 mockedSongCollection=mockedMongoClient.db.songs
@@ -34,8 +34,13 @@ def append_songs(songs):
     output.append({'_id': str(s['_id']), 'artist' : s['artist'], 'title' : s['title']})
   return output
 
+
 class TestSongService(unittest.TestCase):
   """ Test Song Service """
+
+  def setUp(self):
+    self.app = create_app()
+    self.app.testing = True
 
   def tearDown(self):
     mockedSongCollection.remove()
@@ -43,7 +48,8 @@ class TestSongService(unittest.TestCase):
   def test_empty_db(self):
     """ Verify that we get an empty result from the database """
     # test
-    actual = tested.getList(10, 20)
+    with self.app.app_context():
+      actual = tested.getList(10, 20)
     # verification
     result = append_songs(actual['data'])
     assert [] == result
@@ -54,7 +60,8 @@ class TestSongService(unittest.TestCase):
     # result
     expectedResult=insertNSongsInDb(500)
     # test
-    actual = tested.getList(10, 1)
+    with self.app.app_context():
+      actual = tested.getList(10, 1)
     # verification
     result = append_songs(actual['data'])
     assert expectedResult[0:10] == result
@@ -67,7 +74,8 @@ class TestSongService(unittest.TestCase):
     expectedPageSize=20
     expectedPageNum=10
     # test
-    actual = tested.getList(expectedPageSize, expectedPageNum)
+    with self.app.app_context():
+      actual = tested.getList(expectedPageSize, expectedPageNum)
     # verification
     result = append_songs(actual['data'])
     expectedIndex=(expectedPageSize*(expectedPageNum-1))

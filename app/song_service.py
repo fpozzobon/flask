@@ -1,6 +1,9 @@
 import re, bson
 from app.exceptions import SongNotFoundException, ResourceNotFoundException
+from app.extensions import cache
 import statistics
+
+CACHE_TIMEOUT = 500
 
 class SongService():
 
@@ -12,11 +15,12 @@ class SongService():
     skips = page_size * (page_num - 1)
     return db_find.skip(skips).limit(page_size)
 
+  @cache.memoize(timeout=CACHE_TIMEOUT)
   def getList(self, page_size, page_num):
     self.logger.debug('Getting the songs with page size : %s and page_num : %s', page_size, page_num)
     data = self.skip_limit(self.songCollection.find(), page_size, page_num)
     count = data.count()
-    return {'data':data, 'count':count}
+    return {'data':list(data), 'count':count}
 
   def computeAverageDifficulty(self, songs):
       if songs.count() == 0:
@@ -26,6 +30,7 @@ class SongService():
           sum += s['difficulty']
       return sum / songs.count()
 
+  @cache.memoize(timeout=CACHE_TIMEOUT)
   def averageDifficulty(self, level=None):
     if level is None:
       data = self.songCollection.find()
@@ -40,6 +45,7 @@ class SongService():
     regx = re.compile(message, re.IGNORECASE)
     return self.songCollection.find({"$or": [{ "title": regx}, {"artist": regx }]})
 
+  @cache.memoize(timeout=CACHE_TIMEOUT)
   def search(self, message):
     self.logger.debug('Searching the songs containing the message %s', message)
     # we use first the $text search as it's more efficient the drawback is that it search on the whole word
@@ -47,7 +53,7 @@ class SongService():
     # so if we don't find anything, we do a less efficient search on the partial words
     if songs.count() == 0:
       songs = self.searchWithRegex(message)
-    return songs
+    return list(songs)
 
   def find(self, song_id):
     current_song = self.songCollection.find_one({"_id": bson.ObjectId(song_id)})
@@ -57,6 +63,7 @@ class SongService():
 
   def rateSong(self, song_id, rating):
     self.logger.debug('Rating the song %s with %s', song_id, rating)
+    cache.delete_memoized(self.rating, self, song_id)
     current_song = self.find(song_id)
     return self.songCollection.update_one(
       {"_id": current_song['_id']},
@@ -64,6 +71,7 @@ class SongService():
           "ratings": rating
       }})
 
+  @cache.memoize(timeout=CACHE_TIMEOUT)
   def rating(self, song_id):
     self.logger.debug('Get the rating of the song %s', song_id)
     current_song = self.find(song_id)

@@ -3,6 +3,7 @@ Flask==0.12.2
 # Flask Extensions
 Flask-PyMongo==0.5.1
 flask-restful==0.3.6
+Flask-Cache==0.13.1
 
 # Other
 mongomock==3.8.0
