@@ -1,5 +1,5 @@
 from flask import current_app, Blueprint, render_template, jsonify, request
-from flask_restful import Resource, Api, reqparse, abort
+from flask_restful import Resource, Api, reqparse, abort, fields, marshal_with
 import math
 from app.exceptions import BadRequestException
 
@@ -33,10 +33,7 @@ def build_link(page_size, page_num, rel):
 
 # Update the response header table with X-total-count and Link
 # depending on count / page_size / page_num
-def update_response_header(response, count, page_size, page_num):
-  # count header
-  response.headers['X-total-count'] = count
-
+def build_response_header(count, page_size, page_num):
   # links next / last / first / prev
   links = []
   if (page_size * page_num) < count:
@@ -47,19 +44,18 @@ def update_response_header(response, count, page_size, page_num):
   if page_num > 1:
     links.append(build_link(page_size, page_num - 1, 'prev'))
 
-  response.headers['Link'] = ', '.join(links)
-
+  return {'X-total-count': count, 'Link': ', '.join(links)}
 
 DEFAULT_PER_PAGE = 20
 # GET /songs
 class GetSongs(Resource):
-    def get(self):
-      page_size = request.args.get('page_size', DEFAULT_PER_PAGE, type=int)
-      page_num = request.args.get('page_num', 1, type=int)
-      songList = getSongService().getList(page_size, page_num)
-      resp = returnJsonResult(append_songs(songList['data']))
-      update_response_header(resp, songList['count'], page_size, page_num)
-      return resp
+
+  def get(self):
+    page_size = request.args.get('page_size', DEFAULT_PER_PAGE, type=int)
+    page_num = request.args.get('page_num', 1, type=int)
+    songList = getSongService().getList(page_size, page_num)
+    resp = append_songs(songList['data'])
+    return {'result':resp}, 200, build_response_header(songList['count'],page_size,page_num)
 
 api.add_resource(GetSongs, '/songs')
 
