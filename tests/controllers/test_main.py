@@ -148,6 +148,74 @@ class TestMainSearch:
     assert "<Response streamed [400 BAD REQUEST]>" == str(rv)
 
 @pytest.mark.usefixtures("app")
+class TestMainRateSong:
+  """ Test /songs/rating POST route """
+
+  def createResult(self,updatedExisting):
+    return {'update_result':{'raw_result':{'updatedExisting':updatedExisting}}}
+
+  def mockRateSong(self, app, updatedExisting):
+    songService = mockSongService(app)
+    songService.rateSong.return_value = self.createResult(updatedExisting)
+    return songService
+
+  def test_rate_song_less_than_1(self, app):
+    """ Verify that we don't call rateSong service """
+    # setup
+    testapp = app.test_client()
+    songService = self.mockRateSong(app, True)
+    # test
+    actual = testapp.post('/songs/rating',data=dict(
+        rating=0.314,
+        song_id="any"
+    ))
+    # verification
+    assert '<Response streamed [500 INTERNAL SERVER ERROR]>' == str(actual)
+    songService.rateSong.assert_not_called()
+
+  def test_rate_song_greater_than_5(self, app):
+    """ Verify that we don't call rateSong service """
+    # setup
+    testapp = app.test_client()
+    songService = self.mockRateSong(app, True)
+    # test
+    actual = testapp.post('/songs/rating',data=dict(
+        rating=5.314,
+        song_id="any"
+    ))
+    # verification
+    assert '<Response streamed [500 INTERNAL SERVER ERROR]>' == str(actual)
+    songService.rateSong.assert_not_called()
+
+  def test_rate_song_error(self, app):
+    """ Verify that we get the rating and call the service correctly """
+    # setup
+    testapp = app.test_client()
+    songService = self.mockRateSong(app, False)
+    # test
+    actual = testapp.post('/songs/rating',data=dict(
+        rating=1,
+        song_id="any"
+    ))
+    # verification
+    assert '<Response streamed [500 INTERNAL SERVER ERROR]>' == str(actual)
+
+  def test_rate_song_ok(self, app):
+    """ Verify that we get the rating and call the service correctly """
+    # setup
+    testapp = app.test_client()
+    expectedRating = 4.56
+    expectedId = "anyId"
+    songService = self.mockRateSong(app, True)
+    # test
+    actual = testapp.post('/songs/rating',data=dict(
+        rating=expectedRating,
+        song_id=expectedId
+    ))
+    # verification
+    songService.rateSong.assert_called_with(expectedId,expectedRating)
+
+@pytest.mark.usefixtures("app")
 class TestMainRating:
   """ Test /songs/avg/rating/<string:song_id> route """
 

@@ -6,6 +6,9 @@ import unittest
 from unittest.mock import MagicMock
 import mongomock
 import flask
+import sys
+mockedCache=MagicMock()
+sys.modules['app.extensions.cache']=mockedCache
 from app.song_service import SongService
 from app.exceptions import SongNotFoundException, ResourceNotFoundException
 from tests.utils import insertNSongsInDb, createSong
@@ -140,13 +143,18 @@ class TestRateSong(TestSongServiceWithMongoMock):
                         self.song_id,
                         123)
 
-  def verify_rate(self,ratings=None):
+  def insert_valid_test_case(self,ratings=None):
     # setup
-    expectedRating=123.3
     songToInsert={'_id':bson.ObjectId(self.song_id)}
     if not ratings == None:
       songToInsert['ratings']=ratings
     self.mockedSongCollection.insert(songToInsert)
+    return songToInsert
+
+  def verify_rate(self,ratings=None):
+    # setup
+    expectedRating=123.3
+    songToInsert=self.insert_valid_test_case(ratings)
     # test
     with self.app.app_context():
       actual = self.tested.rateSong(self.song_id,expectedRating)
@@ -167,6 +175,13 @@ class TestRateSong(TestSongServiceWithMongoMock):
     """ Verify that we add a rating """
     self.verify_rate([1,2,3])
 
+  def test_rate_should_delete_cache(self):
+    self.insert_valid_test_case()
+    # test
+    with self.app.app_context():
+      actual = self.tested.rateSong(self.song_id,5)
+    # verification
+    mockedCache.delete_memoized(self.tested.rating, self.tested, self.song_id)
 
 class TestRating(TestSongServiceWithMongoMock):
   """ Get Rating """
