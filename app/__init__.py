@@ -12,6 +12,9 @@ def create_app():
   # initialize the cache
   cache.init_app(app,config={'CACHE_TYPE': 'simple'})
 
+  with app.app_context():
+    cache.clear()
+
   # Error handling
   @app.errorhandler(ResourceNotFoundException)
   def resource_not_found(e):
