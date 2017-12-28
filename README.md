@@ -2,8 +2,8 @@
 Implementation of a simple flask API using MongoDB.
 
 ## Pre requirements
-Install and run MongoDB
-Install Python (idealy Python 3)
+* Install and run MongoDB
+* Install Python (idealy Python 3)
 
 ## Quickstart
 Use the Makefile
