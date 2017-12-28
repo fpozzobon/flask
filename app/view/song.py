@@ -5,8 +5,7 @@ def formatSong(s):
           'title': s.get('title'),
           'level': s.get('level'),
           'difficulty': s.get('difficulty'),
-          'released': s.get('released'),
-          'ratings': s.get('ratings')
+          'released': s.get('released')
         }
 
 def append_songs(songs):

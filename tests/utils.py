@@ -5,8 +5,7 @@ def createSong(id):
           'title': "title%s"%id,
           'level': "level%s"%id,
           'difficulty': "difficulty%s"%id,
-          'released': "released%s"%id,
-          'ratings': []
+          'released': "released%s"%id
         }
 
 def createNSongs(n):
