@@ -1,8 +1,7 @@
 from flask import current_app, Blueprint, render_template, jsonify, request
 from flask_restful import Resource, Api, reqparse, abort
 import math
-from app.exceptions import ResourceNotFoundException, SongNotFoundException, BadRequestException
-from flask import current_app
+from app.exceptions import BadRequestException
 
 main = Blueprint('main', __name__)
 api = Api(main)
@@ -121,17 +120,3 @@ class Rating(Resource):
       return returnJsonResult(getSongService().rating(song_id))
 
 api.add_resource(Rating, '/songs/avg/rating/<string:song_id>')
-
-# Error handling
-# TODO : looks like it's not compatible with flask_restful :/
-@main.errorhandler(ResourceNotFoundException)
-def resource_not_found(e):
-    return "Resource not found : %s" % str(e), 404
-
-@main.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html', url_root=request.url_root), 404
-
-@main.errorhandler(BadRequestException)
-def handle_bad_request(e):
-    return "Bad request : %s" % str(e), 400
