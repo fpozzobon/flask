@@ -86,19 +86,31 @@ api.add_resource(Search, '/songs/search')
 # Note : we may want to apply a limitation on the precision for rating in the future
 # TODO validate if we want to add a timestamp to each rating
 class RateSong(Resource):
-    def post(self):
-      rating = request.json['rating']
-      song_id = request.json['song_id']
 
-      # rating should be between 1 and 5
-      if rating < 1 or rating > 5:
-        raise BadRequestException("Rating should be between 1 and 5")
+  def __init__(self):
+    self.parser = reqparse.RequestParser()
+    self.parser.add_argument('song_id',
+        help="Missing 'song_id' property !",
+        required=True)
+    self.parser.add_argument('rating',
+                             type=float,
+                             help="Missing 'rating' property to apply to the song !",
+                             required=True)
 
-      update_result = getSongService().rateSong(song_id, rating)
+  def post(self):
+    args= self.parser.parse_args(strict=True)
+    rating = args['rating']
+    song_id = args['song_id']
 
-      if not update_result.raw_result['updatedExisting']:
-        return "Error when updating %(id)s, %(msg)s" % {'id': str(song_id), 'msg':update_result.raw_result}, 500
-      return returnJsonResult(str(update_result.raw_result))
+    # rating should be between 1 and 5
+    if rating < 1 or rating > 5:
+      raise BadRequestException("Rating should be between 1 and 5")
+
+    update_result = getSongService().rateSong(song_id, rating)
+
+    if not update_result.raw_result['updatedExisting']:
+      return "Error when updating %(id)s, %(msg)s" % {'id': str(song_id), 'msg':update_result.raw_result}, 500
+    return returnJsonResult(str(update_result.raw_result))
 
 api.add_resource(RateSong, '/songs/rating')
 
