@@ -6,7 +6,7 @@ Implementation of a simple flask API using MongoDB.
 * Install Python (idealy Python 3)
 
 ## Quickstart
-Use the Makefile
+#### Use the Makefile
 
   Or
   
@@ -32,19 +32,21 @@ $ export FLASK_API_DB_URL=mongodb://localhost:27017/<yourcollection>>
 
 > Note : databaseUrl is optional, if not used the application will connect to mongodb://localhost:27017/flask
 
-### Populate the database :
+### Database manipulation :
+
+#### Populate the database (add data and indexes)
 ```sh
 $ flask initdb
 ```
 
 > Note : the database won't be populated if there is already some documents in songs collection
 
-Clean the database (empty songs collection):
+#### Clean the database (empty songs collection):
 ```sh
 $ flask cleandb
 ```
 
-Run the project :
+### Run the project :
 ```sh
 $ python flask_api.py
 ```
@@ -52,11 +54,11 @@ $ python flask_api.py
 Finally open in your browser http://127.0.0.1:5000.
 
 ### Unit Tests
-Run the unit tests :
+#### Run the unit tests :
 ```sh
 $ py.test tests
 ```
-Run the integration-'ish' tests : (only /songs is tested)
+#### Run the integration-'ish' tests : (only /songs is tested)
 ```sh
 $ python flask_integration_tests.py
 ```
