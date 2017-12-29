@@ -65,7 +65,13 @@ $ python flask_integration_tests.py
 
 ### Possible enhancements
 
+* [Best Practice] : use a global variable for mongodb and songService in place of app.config 
+* [Best Practice] : use tuples in song service for returning multiple variables
+* [Best Practice] : make some methods private as not useful outside of the class
 * [Optimisation] : use cache on main controller
 * [Marshalling] : use restfull marshaller
+* [Database] : investigate a better way for dealing with _id
 * [Database] : parse release date as a Date
 * [Tests] : cover all the tests
+* [Tests] : use patch and other handy stuff
+* [Documentation] : replace the main page with a swagger documentation (using flasgger ?)
