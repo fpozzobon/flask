@@ -4,6 +4,7 @@ import sys
 import mongomock
 mockedMongo = MagicMock()
 mockedMongoClient = mongomock.MongoClient()
+mockedMongoClient.cx = MagicMock()
 mockedMongo.PyMongo.return_value = mockedMongoClient
 sys.modules['flask_pymongo'] = mockedMongo
 import unittest
