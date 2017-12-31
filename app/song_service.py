@@ -34,10 +34,10 @@ class SongService():
     else:
       return data[0]['avg']
 
-  def searchWithTextIndex(self, message):
+  def __searchWithTextIndex(self, message):
     return self.songCollection.find({ "$text": { "$search": message, "$caseSensitive": False, "$diacriticSensitive": False}})
 
-  def searchWithRegex(self, message):
+  def __searchWithRegex(self, message):
     regx = re.compile(message, re.IGNORECASE)
     return self.songCollection.find({"$or": [{ "title": regx}, {"artist": regx }]})
 
@@ -45,10 +45,10 @@ class SongService():
   def search(self, message):
     self.logger.debug('Searching the songs containing the message %s', message)
     # we use first the $text search as it's more efficient the drawback is that it search on the whole word
-    songs = self.searchWithTextIndex(message)
+    songs = self.__searchWithTextIndex(message)
     # so if we don't find anything, we do a less efficient search on the partial words
     if songs.count() == 0:
-      songs = self.searchWithRegex(message)
+      songs = self.__searchWithRegex(message)
     return list(songs)
 
   def find(self, song_id):
