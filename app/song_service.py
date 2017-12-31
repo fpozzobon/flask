@@ -10,16 +10,16 @@ class SongService():
     self.songCollection = songCollection
     self.logger = logger
 
-  def skip_limit(self, db_find, page_size, page_num):
+  def __skip_limit(self, db_find, page_size, page_num):
     skips = page_size * (page_num - 1)
     return db_find.skip(skips).limit(page_size)
 
   @cache.memoize(timeout=CACHE_TIMEOUT)
   def getList(self, page_size, page_num):
     self.logger.debug('Getting the songs with page size : %s and page_num : %s', page_size, page_num)
-    data = self.skip_limit(self.songCollection.find(), page_size, page_num)
-    count = data.count()
-    return {'data':list(data), 'count':count}
+    result = self.__skip_limit(self.songCollection.find(), page_size, page_num)
+    count = result.count()
+    return list(result), count
 
   @cache.memoize(timeout=CACHE_TIMEOUT)
   def averageDifficulty(self, level=None):

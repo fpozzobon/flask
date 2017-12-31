@@ -20,7 +20,7 @@ class TestMainSongs:
 
   def mockGetList(self, app, data, count):
     songService = mockSongService(app)
-    songService.getList.return_value = {'data':data,'count':count}
+    songService.getList.return_value = data,count
     return songService
 
   def test_empty_db(self, app):

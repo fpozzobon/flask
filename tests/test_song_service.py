@@ -46,11 +46,10 @@ class TestGetList(TestSongServiceWithMongoMock):
     """ Verify that we get an empty result from the database """
     # test
     with self.app.app_context():
-      actual = self.tested.getList(10, 20)
+      data, count = self.tested.getList(10, 20)
     # verification
-    result = list(actual['data'])
-    assert [] == result
-    assert 0 == actual['count']
+    assert [] == data
+    assert 0 == count
 
   def test_get_list_with_populated_db(self):
     """ Verify that we get a result from the database """
@@ -58,11 +57,10 @@ class TestGetList(TestSongServiceWithMongoMock):
     expectedResult=insertNSongsInDb(500, self.mockedSongCollection)
     # test
     with self.app.app_context():
-      actual = self.tested.getList(10, 1)
+      data, count = self.tested.getList(10, 1)
     # verification
-    result = list(actual['data'])
-    assert expectedResult[0:10] == result
-    assert 500 == actual['count']
+    assert expectedResult[0:10] == data
+    assert 500 == count
 
   def test_get_list_with_populated_db_pagination(self):
     """ Verify that we get a result from the database """
@@ -73,12 +71,11 @@ class TestGetList(TestSongServiceWithMongoMock):
     expectedResult=insertNSongsInDb(expectedCount, self.mockedSongCollection)
     # test
     with self.app.app_context():
-      actual = self.tested.getList(expectedPageSize, expectedPageNum)
+      data, count = self.tested.getList(expectedPageSize, expectedPageNum)
     # verification
-    result = list(actual['data'])
     expectedIndex=(expectedPageSize*(expectedPageNum-1))
-    assert expectedResult[expectedIndex:expectedIndex+expectedPageSize] == result
-    assert expectedCount == actual['count']
+    assert expectedResult[expectedIndex:expectedIndex+expectedPageSize] == data
+    assert expectedCount == count
 
 class TestAverageDifficulty(TestSongServiceWithMongoMock):
   """ Get AverageDifficulty """

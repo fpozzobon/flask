@@ -48,9 +48,9 @@ class GetSongs(Resource):
   def get(self):
     page_size = request.args.get('page_size', DEFAULT_PER_PAGE, type=int)
     page_num = request.args.get('page_num', 1, type=int)
-    songList = getSongService().getList(page_size, page_num)
-    resp = append_songs(songList['data'])
-    return returnJsonResult(resp), 200, build_response_header(songList['count'],page_size,page_num)
+    data, count = getSongService().getList(page_size, page_num)
+    resp = append_songs(data)
+    return returnJsonResult(resp), 200, build_response_header(count,page_size,page_num)
 
 api.add_resource(GetSongs, '/songs')
 
