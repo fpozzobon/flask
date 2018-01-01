@@ -44,8 +44,46 @@ def build_response_header(count, page_size, page_num):
 DEFAULT_PER_PAGE = 20
 # GET /songs
 class GetSongs(Resource):
-
   def get(self):
+    """Get songs
+      ---
+      parameters:
+        - name: page_size
+          in: query
+          type: integer
+          description: maximum number of songs to get
+          required: false
+          default: 20
+        - name: page_num
+          in: query
+          type: integer
+          description: page number to get (depending on page_size)
+          required: false
+          default: 1
+      definitions:
+        Song:
+          type: object
+          properties:
+            _id:
+              type: string
+            artist:
+              type: string
+            title:
+              type: string
+            level:
+              type: int
+            difficulty:
+              type: float
+            released:
+              type: string
+      responses:
+        200:
+          description: A list of songs
+          schema:
+            $ref: '#/definitions/Song'
+          examples:
+            result: [{"artist": "The Yousicians","title": "Lycanthropic Metamorphosis","difficulty": 14.6,"level":13,"released": "2016-10-26"}]
+    """
     page_size = request.args.get('page_size', DEFAULT_PER_PAGE, type=int)
     page_num = request.args.get('page_num', 1, type=int)
     data, count = getSongService().getList(page_size, page_num)
@@ -57,6 +95,20 @@ api.add_resource(GetSongs, '/songs')
 # GET /songs/avg/difficulty
 class AverageDifficulty(Resource):
     def get(self, level=None):
+      """Get average of difficulty
+        ---
+        parameters:
+          - name: level
+            in: path
+            type: integer
+            description: gives back average difficulty of all or a level
+            required: false
+        responses:
+          200:
+            description: Average of difficulty
+            examples:
+              result: 12.2
+      """
       return returnJsonResult(getSongService().averageDifficulty(level))
 
 api.add_resource(AverageDifficulty, '/songs/avg/difficulty', '/songs/avg/difficulty/<int:level>')
@@ -64,6 +116,22 @@ api.add_resource(AverageDifficulty, '/songs/avg/difficulty', '/songs/avg/difficu
 # GET /songs/search
 class Search(Resource):
     def get(self):
+      """Search
+        ---
+        parameters:
+          - name: message
+            in: query
+            type: string
+            description: message to filter on title or artist
+            required: true
+        responses:
+          200:
+            description: Returns a list of songs with the corresponding message as a title or artist
+            schema:
+              $ref: '#/definitions/Song'
+            examples:
+              result: [{"artist": "The Yousicians","title": "Lycanthropic Metamorphosis","difficulty": 14.6,"level":13,"released": "2016-10-26"}]
+      """
       message = request.args.get('message')
       if message == None:
         abort(400, message="'message' parameter is missing ! Please provide one. Example : /songs/search?message=you")
@@ -88,6 +156,36 @@ class RateSong(Resource):
                              required=True)
 
   def post(self):
+    """RateSong
+      ---
+      parameters:
+        - name: body
+          in: body
+          schema: {
+            "required":[
+              "song_id",
+              "rating"
+            ],
+            "properties": {
+              "song_id": {
+                "type": "string",
+                "description": "Song id to rate",
+                "default":"5a4a61b691f4190c0c12740e"
+              },
+              "rating": {
+                "type": "number",
+                "description": "Rating to apply",
+                "default":5
+              },
+            }
+          }
+          required: true
+      responses:
+        200:
+          description: Returns result of adding a rate to the song
+          examples:
+            "result": "{'n': 1, 'nModified': 1, 'ok': 1.0, 'updatedExisting': True}"
+    """
     args= self.parser.parse_args(strict=True)
     rating = args['rating']
     song_id = args['song_id']
@@ -108,6 +206,20 @@ api.add_resource(RateSong, '/songs/rating')
 # GET /songs/avg/rating/<string:song_id>
 class Rating(Resource):
     def get(self,song_id):
+      """Rating
+        ---
+        parameters:
+          - name: song_id
+            in: path
+            type: string
+            description: song id to get the rating
+            required: true
+        responses:
+          200:
+            description: Returns the average rating of the selected song
+            examples:
+              result: 4
+      """
       return returnJsonResult(getSongService().rating(song_id))
 
 api.add_resource(Rating, '/songs/avg/rating/<string:song_id>')

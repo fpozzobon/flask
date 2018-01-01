@@ -4,6 +4,7 @@ from app.db_config import configureDatabase
 from app.exceptions import ResourceNotFoundException, SongNotFoundException, BadRequestException
 from app.extensions import cache
 from app.song_service import songService
+from flasgger import Swagger
 
 def create_app():
   app = Flask(__name__)
@@ -34,5 +35,7 @@ def create_app():
 
   # register our blueprints
   app.register_blueprint(main)
+
+  swagger = Swagger(app)
 
   return app

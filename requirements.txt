@@ -6,6 +6,7 @@ flask-restful==0.3.6
 Flask-Cache==0.13.1
 
 # Other
+flasgger==0.8.0
 mongomock==3.8.0
 pytest-mock==1.6.3
 

@@ -70,5 +70,3 @@ $ python flask_integration_tests.py
 * [Database] : investigate a better way for dealing with _id
 * [Database] : parse release date as a Date
 * [Tests] : cover all the tests
-* [Tests] : use patch and other handy stuff
-* [Documentation] : replace the main page with a swagger documentation (using flasgger ?)
