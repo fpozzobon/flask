@@ -1,16 +1,16 @@
-from flask import current_app, Blueprint, render_template, jsonify, request
-from flask_restful import Resource, Api, reqparse, abort, fields, marshal_with
+from flask import Blueprint, render_template, request
+from flask_restful import Resource, Api, reqparse, abort
 import math
 from app.exceptions import BadRequestException
-from app.view.song import formatSong, append_songs
+from app.view.song import append_songs
+from app.song_service import songService
 
 main = Blueprint('main', __name__)
 api = Api(main)
 
 def getSongService():
-  songService = current_app.config.get('songService')
   if songService == None:
-    raise Exception("SongService missing from current_app.config['songService'] !")
+    raise Exception("app.song_service.songService null !")
   return songService
 
 @main.route('/')

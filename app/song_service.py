@@ -1,12 +1,13 @@
 import re, bson
 from app.exceptions import SongNotFoundException, ResourceNotFoundException
 from app.extensions import cache
+from flask import current_app
 
 CACHE_TIMEOUT = 500
 
 class SongService():
 
-  def __init__(self, songCollection, logger):
+  def init(self, songCollection, logger):
     self.songCollection = songCollection
     self.logger = logger
 
@@ -79,3 +80,5 @@ class SongService():
       raise ResourceNotFoundException("no rating found for the song "+song_id)
 
     return data[0]['avg']
+
+songService = SongService()

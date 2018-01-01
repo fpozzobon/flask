@@ -27,7 +27,8 @@ class TestSongServiceWithMongoMock(TestService):
     self.song_id="5a44f39191f4196576cb1eb2"
     mockedMongoClient=mongomock.MongoClient()
     self.mockedSongCollection=mockedMongoClient.db.songs
-    self.tested = SongService(self.mockedSongCollection, MagicMock())
+    self.tested = SongService()
+    self.tested.init(self.mockedSongCollection, MagicMock())
   def tearDown(self):
     super().tearDown()
 
@@ -36,7 +37,8 @@ class TestSongServiceWithMagicMock(TestService):
   def setUp(self):
     super().setUp()
     self.mockedSongCollection=MagicMock()
-    self.tested = SongService(self.mockedSongCollection, MagicMock())
+    self.tested = SongService()
+    self.tested.init(self.mockedSongCollection, MagicMock())
   def tearDown(self):
     super().tearDown()
 

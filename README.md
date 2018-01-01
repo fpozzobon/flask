@@ -65,7 +65,6 @@ $ python flask_integration_tests.py
 
 ### Possible enhancements
 
-* [Best Practice] : use a global variable for mongodb and songService in place of app.config
 * [Optimisation] : use cache on main controller
 * [Marshalling] : use restfull marshaller
 * [Database] : investigate a better way for dealing with _id

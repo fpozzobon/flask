@@ -3,7 +3,7 @@ from app.controllers.main import main
 from app.db_config import configureDatabase
 from app.exceptions import ResourceNotFoundException, SongNotFoundException, BadRequestException
 from app.extensions import cache
-from app.song_service import SongService
+from app.song_service import songService
 
 def create_app():
   app = Flask(__name__)
@@ -30,7 +30,7 @@ def create_app():
   # Database connection and main route connection
   with app.app_context():
     mongo = configureDatabase(app)
-    app.config['songService'] = SongService(mongo.db.songs, app.logger)
+    songService.init(mongo.db.songs, app.logger)
 
   # register our blueprints
   app.register_blueprint(main)
