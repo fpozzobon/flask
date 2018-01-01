@@ -31,13 +31,14 @@ def build_link(page_size, page_num, rel):
 def build_response_header(count, page_size, page_num):
   # links next / last / first / prev
   links = []
-  if (page_size * page_num) < count:
-    links.append(build_link(page_size, page_num + 1, 'next'))
-  if page_size > 0:
-    links.append(build_link(page_size, math.ceil(count / page_size), 'last'))
-  links.append(build_link(page_size, 1, 'first'))
-  if page_num > 1:
-    links.append(build_link(page_size, page_num - 1, 'prev'))
+  if count > 0:
+    if (page_size * page_num) < count:
+      links.append(build_link(page_size, page_num + 1, 'next'))
+    if page_size > 0:
+      links.append(build_link(page_size, math.ceil(count / page_size), 'last'))
+    links.append(build_link(page_size, 1, 'first'))
+    if page_num > 1:
+      links.append(build_link(page_size, page_num - 1, 'prev'))
 
   return {'X-total-count': count, 'Link': ', '.join(links)}
 
