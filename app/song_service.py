@@ -53,10 +53,13 @@ class SongService():
     return list(songs)
 
   def find(self, song_id):
-    current_song = self.songCollection.find_one({"_id": bson.ObjectId(song_id)})
-    if current_song is None:
+    try:
+      current_song = self.songCollection.find_one({"_id": bson.ObjectId(song_id)})
+      if current_song is None:
+        raise SongNotFoundException(str(song_id))
+      return current_song
+    except bson.errors.InvalidId:
       raise SongNotFoundException(str(song_id))
-    return current_song
 
   def rateSong(self, song_id, rating):
     self.logger.debug('Rating the song %s with %s', song_id, rating)
@@ -70,15 +73,18 @@ class SongService():
 
   @cache.memoize(timeout=CACHE_TIMEOUT)
   def rating(self, song_id):
-    self.logger.debug('Get the rating of the song %s', song_id)
+    try:
+      self.logger.debug('Get the rating of the song %s', song_id)
 
-    averageQuery = {'$project': {'avg': {'$avg':'$ratings'}}}
-    matchQuery = {'$match': {'_id': bson.ObjectId(song_id)}}
-    data = list(self.songCollection.aggregate([matchQuery,averageQuery]))
-    if len(data) == 0:
-      #Note : 404 might be not the most accurate error to give back for that case
-      raise ResourceNotFoundException("no rating found for the song "+song_id)
+      averageQuery = {'$project': {'avg': {'$avg':'$ratings'}}}
+      matchQuery = {'$match': {'_id': bson.ObjectId(song_id)}}
+      data = list(self.songCollection.aggregate([matchQuery,averageQuery]))
+      if len(data) == 0:
+        #Note : 404 might be not the most accurate error to give back for that case
+        raise ResourceNotFoundException("no rating found for the song "+song_id)
 
-    return data[0]['avg']
+      return data[0]['avg']
+    except bson.errors.InvalidId:
+      raise SongNotFoundException(str(song_id))
 
 songService = SongService()
