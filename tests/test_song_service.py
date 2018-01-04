@@ -87,9 +87,34 @@ class TestAverageDifficulty(TestSongServiceWithMongoMock):
     with self.app.app_context():
       actual = self.tested.averageDifficulty()
     # verification
-    assert None == actual
+    assert 0 == actual
 
-  # Unable to test the other tests cases as $avg is not implemented in mongomock
+  def _insertSongWithDifficulty(self, difficulty, level):
+    self.mockedSongCollection.insert({'difficulty':difficulty,'level':level})
+
+  def test_get_average_difficulty(self):
+    """ Verify that we get a result from the database """
+    # result
+    self._insertSongWithDifficulty(10,10)
+    self._insertSongWithDifficulty(5,15)
+    self._insertSongWithDifficulty(3,11)
+    # test
+    with self.app.app_context():
+      actual = self.tested.averageDifficulty()
+    # verification
+    assert 6 == actual
+
+  def test_get_average_difficulty(self):
+    """ Verify that we get a result for a specific level from the database """
+    # result
+    self._insertSongWithDifficulty(10,10)
+    self._insertSongWithDifficulty(5,10)
+    self._insertSongWithDifficulty(3,11)
+    # test
+    with self.app.app_context():
+      actual = self.tested.averageDifficulty(10)
+    # verification
+    assert 7.5 == actual
 
 class TestSearch(TestSongServiceWithMongoMock):
   """ Search """

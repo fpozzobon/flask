@@ -24,7 +24,7 @@ class SongService():
 
   @cache.memoize(timeout=CACHE_TIMEOUT)
   def averageDifficulty(self, level=None):
-    averageQuery = {'$project': {'avg': {'$avg':'$difficulty'}}}
+    averageQuery = {'$group': {'_id':None, 'avg': {'$avg':'$difficulty'}}}
     if level is None:
       data = list(self.songCollection.aggregate([averageQuery]))
     else:
