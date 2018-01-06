@@ -19,3 +19,6 @@ deps:
 
 test:
 	py.test tests
+
+lint:
+	flake8
