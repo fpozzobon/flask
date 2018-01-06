@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, request
 from flask_restful import Resource, Api, reqparse, abort
 import math
 from app.exceptions import BadRequestException
@@ -6,19 +6,13 @@ from app.view.song import append_songs
 from app.song_service import songService
 
 main = Blueprint('main', __name__)
-api = Api(main)
+api = Api(main, '/songs')
 
 
 def getSongService():
     if songService is None:
         raise Exception("app.song_service.songService null !")
     return songService
-
-
-@main.route('/')
-@main.route('/about')
-def home_page():
-    return render_template('index.html', url_root=request.url_root)
 
 
 # Default json result
@@ -111,7 +105,7 @@ class GetSongs(Resource):
                                                                   page_num)
 
 
-api.add_resource(GetSongs, '/songs')
+api.add_resource(GetSongs, '/')
 
 
 # GET /songs/avg/difficulty
@@ -135,8 +129,8 @@ class AverageDifficulty(Resource):
 
 
 api.add_resource(AverageDifficulty,
-                 '/songs/avg/difficulty',
-                 '/songs/avg/difficulty/<int:level>')
+                 '/avg/difficulty',
+                 '/avg/difficulty/<int:level>')
 
 
 # GET /songs/search
@@ -171,7 +165,7 @@ class Search(Resource):
         return returnJsonResult(append_songs(getSongService().search(message)))
 
 
-api.add_resource(Search, '/songs/search')
+api.add_resource(Search, '/search')
 
 
 # POST /songs/rating
@@ -238,7 +232,7 @@ class RateSong(Resource):
         return returnJsonResult(str(update_result.raw_result))
 
 
-api.add_resource(RateSong, '/songs/rating')
+api.add_resource(RateSong, '/rating')
 
 
 # GET /songs/avg/rating/<string:song_id>
@@ -261,4 +255,4 @@ class Rating(Resource):
         return returnJsonResult(getSongService().rating(song_id))
 
 
-api.add_resource(Rating, '/songs/avg/rating/<string:song_id>')
+api.add_resource(Rating, '/avg/rating/<string:song_id>')

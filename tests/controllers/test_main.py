@@ -30,7 +30,7 @@ class TestMainSongs:
         testapp, songService = main
         self.mockGetList(songService, [], 0)
 
-        rv = testapp.get('/songs')
+        rv = testapp.get('/songs/')
         actual = getResult(rv)
         assert 0 == len(actual)
         assert [] == actual
@@ -41,7 +41,7 @@ class TestMainSongs:
         testapp, songService = main
         self.mockGetList(songService, [], 0)
         # test
-        testapp.get('/songs')
+        testapp.get('/songs/')
         # verification
         songService.getList.assert_called_with(20, 1)
 
@@ -51,7 +51,7 @@ class TestMainSongs:
         testapp, songService = main
         self.mockGetList(songService, [], 0)
         # test
-        testapp.get('/songs?page_num=5&page_size=30')
+        testapp.get('/songs/?page_num=5&page_size=30')
         # verification
         songService.getList.assert_called_with(30, 5)
 
@@ -62,7 +62,7 @@ class TestMainSongs:
         expectedSongs = createNSongs(50)
         self.mockGetList(songService, expectedSongs, 0)
         # test
-        rv = testapp.get('/songs')
+        rv = testapp.get('/songs/')
         # verification
         actual = getResult(rv)
         assert expectedSongs == actual
@@ -74,7 +74,7 @@ class TestMainSongs:
         expectedCount = 452
         self.mockGetList(songService, [], expectedCount)
         # test
-        rv = testapp.get('/songs')
+        rv = testapp.get('/songs/')
         # verification
         actual = rv.headers['X-total-count']
         assert str(expectedCount) == actual

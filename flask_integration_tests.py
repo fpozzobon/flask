@@ -30,14 +30,14 @@ class getSongsTestCases(unittest.TestCase):
 
     # Verify that we get a result from an empty database
     def test_empty_db(self):
-        rv = self.app.get('/songs')
+        rv = self.app.get('/api/v1/songs/')
         actual = self.getResult(rv)
         self.assertEqual(0, len(actual))
         self.assertEqual([], actual)
 
     # Verify that we get a result from an empty database even with a pagination
     def test_empty_db_with_pagination_arguments(self):
-        rv = self.app.get('/songs?page_num=5&page_size=30')
+        rv = self.app.get('/api/v1/songs/?page_num=5&page_size=30')
         actual = self.getResult(rv)
         self.assertEqual(0, len(actual))
         self.assertEqual([], actual)
@@ -47,7 +47,7 @@ class getSongsTestCases(unittest.TestCase):
         expectedPageSize = 15
         expectedResult = insertNSongsInDb(30, mockedSongCollection)
 
-        rv = self.app.get('/songs?page_size=' + str(expectedPageSize))
+        rv = self.app.get('/api/v1/songs/?page_size=' + str(expectedPageSize))
         actual = self.getResult(rv)
         self.assertEqual(expectedPageSize, len(actual))
         for i in range(expectedPageSize):
@@ -60,7 +60,7 @@ class getSongsTestCases(unittest.TestCase):
         expectedSkip = expectedPageSize * (expectedPageNum - 1)
         expectedResult = insertNSongsInDb(50, mockedSongCollection)
 
-        rv = self.app.get('/songs?page_num=' + str(expectedPageNum) + '&page_size=' + str(expectedPageSize))
+        rv = self.app.get('/api/v1/songs/?page_num=' + str(expectedPageNum) + '&page_size=' + str(expectedPageSize))
         actual = self.getResult(rv)
         self.assertEqual(expectedPageSize, len(actual))
         for i in range(expectedPageSize):
@@ -72,7 +72,7 @@ class getSongsTestCases(unittest.TestCase):
         expectedCount = 50
         insertNSongsInDb(expectedCount, mockedSongCollection)
         # Test
-        rv = self.app.get('/songs?page_num=2&page_size=5')
+        rv = self.app.get('/api/v1/songs/?page_num=2&page_size=5')
         # Verification
         self.assertEqual(str(expectedCount), rv.headers['X-total-count'], rv.headers)
 

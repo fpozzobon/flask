@@ -30,14 +30,27 @@ def create_app():
     def handle_bad_request(e):
         return "Bad request : %s" % str(e), 400
 
+    apiPrefix = 'api/v1'
+
+    @app.route('/')
+    @app.route('/about')
+    def home_page():
+        return render_template('index.html', url_root=request.url_root + apiPrefix + '/')
+
     # Database connection and main route connection
     with app.app_context():
         mongo = configureDatabase(app)
         songService.init(mongo.db.songs, app.logger)
 
-        # register our blueprints
-        app.register_blueprint(main)
+    # register our blueprints
+    app.register_blueprint(main, url_prefix='/' + apiPrefix)
 
-        Swagger(app)
+    app.config['SWAGGER'] = {
+        'title': 'Flask API - Training',
+        'version': 1,
+        'description': 'A simple training on Flask'
+    }
 
-        return app
+    Swagger(app)
+
+    return app
