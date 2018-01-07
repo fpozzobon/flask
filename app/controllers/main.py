@@ -53,6 +53,18 @@ DEFAULT_PER_PAGE = 20
 
 # GET /songs
 class GetSongs(Resource):
+
+    def __init__(self):
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('page_size',
+                                 required=False,
+                                 type=int,
+                                 default=DEFAULT_PER_PAGE)
+        self.parser.add_argument('page_num',
+                                 required=False,
+                                 type=int,
+                                 default=1)
+
     def get(self):
         """Get songs
             ---
@@ -96,8 +108,9 @@ class GetSongs(Resource):
                                   "difficulty": 14.6,"level":13,
                                   "released":"2016-10-26"}]
         """
-        page_size = request.args.get('page_size', DEFAULT_PER_PAGE, type=int)
-        page_num = request.args.get('page_num', 1, type=int)
+        args = self.parser.parse_args(strict=True)
+        page_size = args.get('page_size')
+        page_num = args.get('page_num')
         data, count = getSongService().getList(page_size, page_num)
         resp = append_songs(data)
         return returnJsonResult(resp), 200, build_response_header(count,
@@ -110,6 +123,7 @@ api.add_resource(GetSongs, '/')
 
 # GET /songs/avg/difficulty
 class AverageDifficulty(Resource):
+
     def get(self, level=None):
         """Get average of difficulty
             ---
@@ -135,6 +149,13 @@ api.add_resource(AverageDifficulty,
 
 # GET /songs/search
 class Search(Resource):
+
+    def __init__(self):
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('message',
+                                 help="Missing 'message' argument !",
+                                 required=True)
+
     def get(self):
         """Search
             ---
@@ -157,7 +178,8 @@ class Search(Resource):
                             "level":13,
                             "released": "2016-10-26"}]
         """
-        message = request.args.get('message')
+        args = self.parser.parse_args(strict=True)
+        message = args['message']
         if message is None:
             abort(400, message="'message' parameter is missing ! "
                   "Please provide one. Example : /songs/search?message=you")
