@@ -21,14 +21,14 @@ def getResult(rv):
 class TestMainSongs:
     """ Test /songs route """
 
-    def mockGetList(self, songService, data, count):
+    def __mockGetList(self, songService, data, count):
         songService.getList.return_value = data, count
 
     def test_empty_db(self, main):
         """ Verify that we get a result from an empty database """
         # setUp
         testapp, songService = main
-        self.mockGetList(songService, [], 0)
+        self.__mockGetList(songService, [], 0)
 
         rv = testapp.get('/songs/')
         actual = getResult(rv)
@@ -39,7 +39,7 @@ class TestMainSongs:
         """ Verify that we call songService with 20, 0 """
         # setup
         testapp, songService = main
-        self.mockGetList(songService, [], 0)
+        self.__mockGetList(songService, [], 0)
         # test
         testapp.get('/songs/')
         # verification
@@ -49,7 +49,7 @@ class TestMainSongs:
         """ Verify that we call songService with the right arguments """
         # setup
         testapp, songService = main
-        self.mockGetList(songService, [], 0)
+        self.__mockGetList(songService, [], 0)
         # test
         testapp.get('/songs/?page_num=5&page_size=30')
         # verification
@@ -60,7 +60,7 @@ class TestMainSongs:
         # setup
         testapp, songService = main
         expectedSongs = createNSongs(50)
-        self.mockGetList(songService, expectedSongs, 0)
+        self.__mockGetList(songService, expectedSongs, 0)
         # test
         rv = testapp.get('/songs/')
         # verification
@@ -72,12 +72,68 @@ class TestMainSongs:
         # setup
         testapp, songService = main
         expectedCount = 452
-        self.mockGetList(songService, [], expectedCount)
+        self.__mockGetList(songService, [], expectedCount)
         # test
         rv = testapp.get('/songs/')
         # verification
         actual = rv.headers['X-total-count']
         assert str(expectedCount) == actual
+
+    def test_returns_links_header_empty(self, main):
+        """ Verify that we get empty link header """
+        # setup
+        testapp, songService = main
+        self.__mockGetList(songService, [], 0)
+        # test
+        rv = testapp.get('/songs/')
+        # verification
+        actual = rv.headers['Link']
+        assert "" == actual
+
+    def test_returns_links_header(self, main):
+        """ Verify that we get link in the header for first page """
+        # setup
+        testapp, songService = main
+        expectedSongs = createNSongs(50)
+        self.__mockGetList(songService, expectedSongs, 50)
+        # test
+        rv = testapp.get('/songs/')
+        # verification
+        actual = rv.headers['Link']
+        assert "<http://localhost/songs/?page_size=20&page_num=2>; rel='next'" in actual
+        assert "<http://localhost/songs/?page_size=20&page_num=3>; rel='last'" in actual
+        assert "<http://localhost/songs/?page_size=20&page_num=1>; rel='first'" in actual
+        assert "rel='prev'" not in actual
+
+    def test_returns_links_header_page_2(self, main):
+        """ Verify that we get link in the header for page 2 """
+        # setup
+        testapp, songService = main
+        expectedSongs = createNSongs(50)
+        self.__mockGetList(songService, expectedSongs, 50)
+        # test
+        rv = testapp.get('/songs/?page_num=2')
+        # verification
+        actual = rv.headers['Link']
+        assert "<http://localhost/songs/?page_size=20&page_num=3>; rel='next'" in actual
+        assert "<http://localhost/songs/?page_size=20&page_num=3>; rel='last'" in actual
+        assert "<http://localhost/songs/?page_size=20&page_num=1>; rel='first'" in actual
+        assert "<http://localhost/songs/?page_size=20&page_num=1>; rel='prev'" in actual
+
+    def test_returns_links_header_page_3(self, main):
+        """ Verify that we get link in the header for last page """
+        # setup
+        testapp, songService = main
+        expectedSongs = createNSongs(50)
+        self.__mockGetList(songService, expectedSongs, 50)
+        # test
+        rv = testapp.get('/songs/?page_num=3')
+        # verification
+        actual = rv.headers['Link']
+        assert "rel='next'" not in actual
+        assert "<http://localhost/songs/?page_size=20&page_num=3>; rel='last'" in actual
+        assert "<http://localhost/songs/?page_size=20&page_num=1>; rel='first'" in actual
+        assert "<http://localhost/songs/?page_size=20&page_num=2>; rel='prev'" in actual
 
 
 @pytest.mark.usefixtures("main")
