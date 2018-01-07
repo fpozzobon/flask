@@ -55,8 +55,7 @@ class TestGetList(TestSongServiceWithMongoMock):
     def test_get_list_with_empty_db(self):
         """ Verify that we get an empty result from the database """
         # test
-        with self.app.app_context():
-            data, count = self.tested.getList(10, 20)
+        data, count = self.tested.getList(10, 20)
         # verification
         assert [] == data
         assert 0 == count
@@ -66,8 +65,7 @@ class TestGetList(TestSongServiceWithMongoMock):
         # result
         expectedResult = insertNSongsInDb(500, self.mockedSongCollection)
         # test
-        with self.app.app_context():
-            data, count = self.tested.getList(10, 1)
+        data, count = self.tested.getList(10, 1)
         # verification
         assert expectedResult[0:10] == data
         assert 500 == count
@@ -80,8 +78,7 @@ class TestGetList(TestSongServiceWithMongoMock):
         expectedPageNum = 10
         expectedResult = insertNSongsInDb(expectedCount, self.mockedSongCollection)
         # test
-        with self.app.app_context():
-            data, count = self.tested.getList(expectedPageSize, expectedPageNum)
+        data, count = self.tested.getList(expectedPageSize, expectedPageNum)
         # verification
         expectedIndex = (expectedPageSize * (expectedPageNum - 1))
         assert expectedResult[expectedIndex: (expectedIndex + expectedPageSize)] == data
@@ -93,8 +90,7 @@ class TestAverageDifficulty(TestSongServiceWithMongoMock):
     def test_get_average_difficulty_with_empty_db(self):
         """ Verify that we get an empty result from the database """
         # test
-        with self.app.app_context():
-            actual = self.tested.averageDifficulty()
+        actual = self.tested.averageDifficulty()
         # verification
         assert 0 == actual
 
@@ -109,8 +105,7 @@ class TestAverageDifficulty(TestSongServiceWithMongoMock):
         self._insertSongWithDifficulty(5, 15)
         self._insertSongWithDifficulty(3, 11)
         # test
-        with self.app.app_context():
-            actual = self.tested.averageDifficulty()
+        actual = self.tested.averageDifficulty()
         # verification
         assert 6 == actual
 
@@ -121,8 +116,7 @@ class TestAverageDifficulty(TestSongServiceWithMongoMock):
         self._insertSongWithDifficulty(5, 10)
         self._insertSongWithDifficulty(3, 11)
         # test
-        with self.app.app_context():
-            actual = self.tested.averageDifficulty(10)
+        actual = self.tested.averageDifficulty(10)
         # verification
         assert 7.5 == actual
 
@@ -132,8 +126,7 @@ class TestSearch(TestSongServiceWithMongoMock):
     def test_search_with_empty_db(self):
         """ Verify that we get an empty result from the database """
         # test
-        with self.app.app_context():
-            actual = self.tested.search("anymessage")
+        actual = self.tested.search("anymessage")
         # verification
         assert [] == actual
 
@@ -142,8 +135,7 @@ class TestSearch(TestSongServiceWithMongoMock):
         # result
         expectedResult = insertNSongsInDb(5, self.mockedSongCollection)
         # test
-        with self.app.app_context():
-            actual = self.tested.search("title1")
+        actual = self.tested.search("title1")
         # verification
         assert [expectedResult[1]] == actual
 
@@ -152,8 +144,7 @@ class TestSearch(TestSongServiceWithMongoMock):
         # result
         expectedResult = insertNSongsInDb(10, self.mockedSongCollection)
         # test
-        with self.app.app_context():
-            actual = self.tested.search("artist5")
+        actual = self.tested.search("artist5")
         # verification
         assert [expectedResult[5]] == actual
 
@@ -162,8 +153,7 @@ class TestSearch(TestSongServiceWithMongoMock):
         # result
         expectedResult = insertNSongsInDb(10, self.mockedSongCollection)
         # test
-        with self.app.app_context():
-            actual = self.tested.search("art")
+        actual = self.tested.search("art")
         # verification
         assert expectedResult == actual
 
@@ -173,11 +163,10 @@ class TestRateSong(TestSongServiceWithMongoMock):
     def test_rate_with_empty_db(self):
         """ Verify that we get an exception SongNotFoundException """
         # test
-        with self.app.app_context():
-            self.assertRaises(SongNotFoundException,
-                              self.tested.rateSong,
-                              self.song_id,
-                              123)
+        self.assertRaises(SongNotFoundException,
+                          self.tested.rateSong,
+                          self.song_id,
+                          123)
 
     def insert_valid_test_case(self, ratings=None):
         # setup
@@ -192,9 +181,8 @@ class TestRateSong(TestSongServiceWithMongoMock):
         expectedRating = 123.3
         songToInsert = self.insert_valid_test_case(ratings)
         # test
-        with self.app.app_context():
-            actual = self.tested.rateSong(self.song_id, expectedRating)
-            updatedSong = self.mockedSongCollection.find_one({'_id': songToInsert.get('_id')})
+        actual = self.tested.rateSong(self.song_id, expectedRating)
+        updatedSong = self.mockedSongCollection.find_one({'_id': songToInsert.get('_id')})
         # verification
         assert actual.raw_result['updatedExisting'] is True
         assert updatedSong.get('ratings') is not None
@@ -215,8 +203,7 @@ class TestRateSong(TestSongServiceWithMongoMock):
     def test_rate_should_delete_cache(self, mockedCache):
         self.insert_valid_test_case()
         # test
-        with self.app.app_context():
-            self.tested.rateSong(self.song_id, 5)
+        self.tested.rateSong(self.song_id, 5)
         # verification
         mockedCache.delete_memoized.assert_called_with(self.tested.rating, self.tested, self.song_id)
 
@@ -226,9 +213,8 @@ class TestRating(TestSongServiceWithMongoMock):
     def test_get_average_rating_with_empty_db(self):
         """ Verify that we get an empty result from the database """
         # test
-        with self.app.app_context():
-            self.assertRaises(ResourceNotFoundException,
-                              self.tested.rating,
-                              self.song_id)
+        self.assertRaises(ResourceNotFoundException,
+                          self.tested.rating,
+                          self.song_id)
 
     # Unable to test the other tests cases as $avg is not implemented in mongomock
