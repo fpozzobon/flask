@@ -1,188 +1,160 @@
 #! ../env/bin/python
 # -*- coding: utf-8 -*-
 
-import unittest
-from unittest.mock import MagicMock, patch
-import mongomock
-import flask
-from app.extensions import cache
-from app.song_service import SongService
+import pytest
 from app.exceptions import SongNotFoundException, ResourceNotFoundException
 from tests.utils import insertNSongsInDb
 import bson
 
-
-class TestService(unittest.TestCase):
-    """ Test Service """
-    def setUp(self):
-        self.app = flask.Flask(__name__)
-        self.app.testing = True
-        cache.init_app(self.app,
-                       config={'CACHE_TYPE': 'simple'})
-
-    def tearDown(self):
-        cache.clear()
+song_id = "5a44f39191f4196576cb1eb2"
 
 
-class TestSongServiceWithMongoMock(TestService):
-    """ Test Song Service using mongo mock """
-    def setUp(self):
-        super().setUp()
-        self.song_id = "5a44f39191f4196576cb1eb2"
-        mockedMongoClient = mongomock.MongoClient()
-        self.mockedSongCollection = mockedMongoClient.db.songs
-        self.tested = SongService()
-        self.tested.init(self.mockedSongCollection, MagicMock())
-
-    def tearDown(self):
-        super().tearDown()
-
-
-class TestSongServiceWithMagicMock(TestService):
-    """ Test Song Service using Magic mock """
-    def setUp(self):
-        super().setUp()
-        self.mockedSongCollection = MagicMock()
-        self.tested = SongService()
-        self.tested.init(self.mockedSongCollection, MagicMock())
-
-    def tearDown(self):
-        super().tearDown()
-
-
-class TestGetList(TestSongServiceWithMongoMock):
+@pytest.mark.usefixtures("song_service")
+class TestGetList():
     """ Get List """
-    def test_get_list_with_empty_db(self):
+    def test_get_list_with_empty_db(self, song_service):
         """ Verify that we get an empty result from the database """
         # test
-        data, count = self.tested.getList(10, 20)
+        tested, mockedSongCollection, mockedCache = song_service
+        data, count = tested.getList(10, 20)
         # verification
         assert [] == data
         assert 0 == count
 
-    def test_get_list_with_populated_db(self):
+    def test_get_list_with_populated_db(self, song_service):
         """ Verify that we get a result from the database """
         # result
-        expectedResult = insertNSongsInDb(500, self.mockedSongCollection)
+        tested, mockedSongCollection, mockedCache = song_service
+        expectedResult = insertNSongsInDb(500, mockedSongCollection)
         # test
-        data, count = self.tested.getList(10, 1)
+        data, count = tested.getList(10, 1)
         # verification
         assert expectedResult[0:10] == data
         assert 500 == count
 
-    def test_get_list_with_populated_db_pagination(self):
+    def test_get_list_with_populated_db_pagination(self, song_service):
         """ Verify that we get a result from the database """
         # result
+        tested, mockedSongCollection, mockedCache = song_service
         expectedCount = 500
         expectedPageSize = 20
         expectedPageNum = 10
-        expectedResult = insertNSongsInDb(expectedCount, self.mockedSongCollection)
+        expectedResult = insertNSongsInDb(expectedCount, mockedSongCollection)
         # test
-        data, count = self.tested.getList(expectedPageSize, expectedPageNum)
+        data, count = tested.getList(expectedPageSize, expectedPageNum)
         # verification
         expectedIndex = (expectedPageSize * (expectedPageNum - 1))
         assert expectedResult[expectedIndex: (expectedIndex + expectedPageSize)] == data
         assert expectedCount == count
 
 
-class TestAverageDifficulty(TestSongServiceWithMongoMock):
+@pytest.mark.usefixtures("song_service")
+class TestAverageDifficulty:
     """ Get AverageDifficulty """
-    def test_get_average_difficulty_with_empty_db(self):
+    def test_get_average_difficulty_with_empty_db(self, song_service):
         """ Verify that we get an empty result from the database """
         # test
-        actual = self.tested.averageDifficulty()
+        tested, mockedSongCollection, mockedCache = song_service
+        actual = tested.averageDifficulty()
         # verification
         assert 0 == actual
 
-    def _insertSongWithDifficulty(self, difficulty, level):
-        self.mockedSongCollection.insert({'difficulty': difficulty,
-                                          'level': level})
+    def __insertSongWithDifficulty(self, mockedSongCollection, difficulty, level):
+        mockedSongCollection.insert({'difficulty': difficulty,
+                                     'level': level})
 
-    def test_get_average_difficulty(self):
+    def test_get_average_difficulty(self, song_service):
         """ Verify that we get a result from the database """
         # result
-        self._insertSongWithDifficulty(10, 10)
-        self._insertSongWithDifficulty(5, 15)
-        self._insertSongWithDifficulty(3, 11)
+        tested, mockedSongCollection, mockedCache = song_service
+        self.__insertSongWithDifficulty(mockedSongCollection, 10, 10)
+        self.__insertSongWithDifficulty(mockedSongCollection, 5, 15)
+        self.__insertSongWithDifficulty(mockedSongCollection, 3, 11)
         # test
-        actual = self.tested.averageDifficulty()
+        actual = tested.averageDifficulty()
         # verification
         assert 6 == actual
 
-    def test_get_average_difficulty_on_level(self):
+    def test_get_average_difficulty_on_level(self, song_service):
         """ Verify that we get a result for a specific level from the database """
         # result
-        self._insertSongWithDifficulty(10, 10)
-        self._insertSongWithDifficulty(5, 10)
-        self._insertSongWithDifficulty(3, 11)
+        tested, mockedSongCollection, mockedCache = song_service
+        self.__insertSongWithDifficulty(mockedSongCollection, 10, 10)
+        self.__insertSongWithDifficulty(mockedSongCollection, 5, 10)
+        self.__insertSongWithDifficulty(mockedSongCollection, 3, 11)
         # test
-        actual = self.tested.averageDifficulty(10)
+        actual = tested.averageDifficulty(10)
         # verification
         assert 7.5 == actual
 
 
-class TestSearch(TestSongServiceWithMongoMock):
+@pytest.mark.usefixtures("song_service")
+class TestSearch:
     """ Search """
-    def test_search_with_empty_db(self):
+    def test_search_with_empty_db(self, song_service):
         """ Verify that we get an empty result from the database """
         # test
-        actual = self.tested.search("anymessage")
+        tested, mockedSongCollection, mockedCache = song_service
+        actual = tested.search("anymessage")
         # verification
         assert [] == actual
 
-    def test_search_on_title(self):
+    def test_search_on_title(self, song_service):
         """ Verify that we get a result from the database """
         # result
-        expectedResult = insertNSongsInDb(5, self.mockedSongCollection)
+        tested, mockedSongCollection, mockedCache = song_service
+        expectedResult = insertNSongsInDb(5, mockedSongCollection)
         # test
-        actual = self.tested.search("title1")
+        actual = tested.search("title1")
         # verification
         assert [expectedResult[1]] == actual
 
-    def test_search_on_artist(self):
+    def test_search_on_artist(self, song_service):
         """ Verify that we get a result from the database """
         # result
-        expectedResult = insertNSongsInDb(10, self.mockedSongCollection)
+        tested, mockedSongCollection, mockedCache = song_service
+        expectedResult = insertNSongsInDb(10, mockedSongCollection)
         # test
-        actual = self.tested.search("artist5")
+        actual = tested.search("artist5")
         # verification
         assert [expectedResult[5]] == actual
 
-    def test_search_on_partial_word(self):
+    def test_search_on_partial_word(self, song_service):
         """ Verify that we get a result from the database """
         # result
-        expectedResult = insertNSongsInDb(10, self.mockedSongCollection)
+        tested, mockedSongCollection, mockedCache = song_service
+        expectedResult = insertNSongsInDb(10, mockedSongCollection)
         # test
-        actual = self.tested.search("art")
+        actual = tested.search("art")
         # verification
         assert expectedResult == actual
 
 
-class TestRateSong(TestSongServiceWithMongoMock):
+@pytest.mark.usefixtures("song_service")
+class TestRateSong:
     """ Rate Song """
-    def test_rate_with_empty_db(self):
+    def test_rate_with_empty_db(self, song_service):
         """ Verify that we get an exception SongNotFoundException """
         # test
-        self.assertRaises(SongNotFoundException,
-                          self.tested.rateSong,
-                          self.song_id,
-                          123)
+        tested, mockedSongCollection, mockedCache = song_service
+        with pytest.raises(SongNotFoundException):
+            tested.rateSong(song_id, 123)
 
-    def insert_valid_test_case(self, ratings=None):
+    def __insert_valid_test_case(self, mockedSongCollection, ratings=None):
         # setup
-        songToInsert = {'_id': bson.ObjectId(self.song_id)}
+        songToInsert = {'_id': bson.ObjectId(song_id)}
         if ratings is not None:
             songToInsert['ratings'] = ratings
-        self.mockedSongCollection.insert(songToInsert)
+        mockedSongCollection.insert(songToInsert)
         return songToInsert
 
-    def verify_rate(self, ratings=None):
+    def __verify_rate(self, tested, mockedSongCollection, ratings=None):
         # setup
         expectedRating = 123.3
-        songToInsert = self.insert_valid_test_case(ratings)
+        songToInsert = self.__insert_valid_test_case(mockedSongCollection, ratings)
         # test
-        actual = self.tested.rateSong(self.song_id, expectedRating)
-        updatedSong = self.mockedSongCollection.find_one({'_id': songToInsert.get('_id')})
+        actual = tested.rateSong(song_id, expectedRating)
+        updatedSong = mockedSongCollection.find_one({'_id': songToInsert.get('_id')})
         # verification
         assert actual.raw_result['updatedExisting'] is True
         assert updatedSong.get('ratings') is not None
@@ -191,30 +163,33 @@ class TestRateSong(TestSongServiceWithMongoMock):
         else:
             assert expectedRating == updatedSong.get('ratings')[len(ratings)]
 
-    def test_rate_empty_rating(self):
+    def test_rate_empty_rating(self, song_service):
         """ Verify that we add a rating """
-        self.verify_rate()
+        tested, mockedSongCollection, mockedCache = song_service
+        self.__verify_rate(tested, mockedSongCollection)
 
-    def test_rate_existing_rating(self):
+    def test_rate_existing_rating(self, song_service):
         """ Verify that we add a rating """
-        self.verify_rate([1, 2, 3])
+        tested, mockedSongCollection, mockedCache = song_service
+        self.__verify_rate(tested, mockedSongCollection, [1, 2, 3])
 
-    @patch('app.song_service.cache')
-    def test_rate_should_delete_cache(self, mockedCache):
-        self.insert_valid_test_case()
+    def test_rate_should_delete_cache(self, song_service):
+        tested, mockedSongCollection, mockedCache = song_service
+        self.__insert_valid_test_case(mockedSongCollection)
         # test
-        self.tested.rateSong(self.song_id, 5)
+        tested.rateSong(song_id, 5)
         # verification
-        mockedCache.delete_memoized.assert_called_with(self.tested.rating, self.tested, self.song_id)
+        mockedCache.delete_memoized.assert_called_with(tested.rating, tested, song_id)
 
 
-class TestRating(TestSongServiceWithMongoMock):
+@pytest.mark.usefixtures("song_service")
+class TestRating:
     """ Get Rating """
-    def test_get_average_rating_with_empty_db(self):
+    def test_get_average_rating_with_empty_db(self, song_service):
         """ Verify that we get an empty result from the database """
         # test
-        self.assertRaises(ResourceNotFoundException,
-                          self.tested.rating,
-                          self.song_id)
+        tested, mockedSongCollection, mockedCache = song_service
+        with pytest.raises(ResourceNotFoundException):
+            tested.rating(song_id)
 
     # Unable to test the other tests cases as $avg is not implemented in mongomock
