@@ -100,7 +100,7 @@ class GetSongs(Resource):
                 200:
                     description: A list of songs
                     schema:
-                    $ref: '#/definitions/Song'
+                        $ref: '#/definitions/Song'
                     examples:
                         result: [{"artist": "The Yousicians",
                                   "title": "Lycanthropic Metamorphosis",
@@ -132,9 +132,14 @@ class AverageDifficulty(Resource):
                   type: integer
                   description: gives back average difficulty of all or a level
                   required: false
+            definitions:
+                Average:
+                  type: float
             responses:
               200:
                 description: Average of difficulty
+                schema:
+                  $ref: '#/definitions/Average'
                 examples:
                   result: 12.2
         """
@@ -230,9 +235,23 @@ class RateSong(Resource):
                     }
                   }
                   required: true
+            definitions:
+                UpdateResult:
+                  type: object
+                  properties:
+                    n:
+                      type: int
+                    nModified:
+                      type: int
+                    ok:
+                      type: float
+                    updatedExisting:
+                      type: boolean
             responses:
                 200:
                     description: Returns result of adding a rate to the song
+                    schema:
+                      $ref: '#/definitions/UpdateResult'
                     examples:
                         "result": "{'n': 1, 'nModified': 1, 'ok': 1.0, 'updatedExisting': True}"
         """
@@ -270,6 +289,8 @@ class Rating(Resource):
             responses:
                 200:
                     description: Returns the average rating of the selected song
+                    schema:
+                      $ref: '#/definitions/Average'
                     examples:
                         result: 4
         """
