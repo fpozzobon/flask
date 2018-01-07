@@ -17,6 +17,5 @@ def createNSongs(n):
 
 def insertNSongsInDb(n, mockedSongCollection):
     expectedResult = createNSongs(n)
-    for song in expectedResult:
-        mockedSongCollection.insert(song)
+    mockedSongCollection.insert_many(expectedResult)
     return expectedResult

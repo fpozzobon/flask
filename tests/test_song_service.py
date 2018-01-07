@@ -2,12 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 import mongomock
 import flask
-import sys
-mockedCache = MagicMock()
-sys.modules['app.extensions.cache'] = mockedCache
+from app.extensions import cache
 from app.song_service import SongService
 from app.exceptions import SongNotFoundException, ResourceNotFoundException
 from tests.utils import insertNSongsInDb
@@ -19,6 +17,11 @@ class TestService(unittest.TestCase):
     def setUp(self):
         self.app = flask.Flask(__name__)
         self.app.testing = True
+        cache.init_app(self.app,
+                       config={'CACHE_TYPE': 'simple'})
+
+    def tearDown(self):
+        cache.clear()
 
 
 class TestSongServiceWithMongoMock(TestService):
@@ -208,13 +211,14 @@ class TestRateSong(TestSongServiceWithMongoMock):
         """ Verify that we add a rating """
         self.verify_rate([1, 2, 3])
 
-    def test_rate_should_delete_cache(self):
+    @patch('app.song_service.cache')
+    def test_rate_should_delete_cache(self, mockedCache):
         self.insert_valid_test_case()
         # test
         with self.app.app_context():
             self.tested.rateSong(self.song_id, 5)
         # verification
-        mockedCache.delete_memoized(self.tested.rating, self.tested, self.song_id)
+        mockedCache.delete_memoized.assert_called_with(self.tested.rating, self.tested, self.song_id)
 
 
 class TestRating(TestSongServiceWithMongoMock):

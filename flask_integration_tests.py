@@ -23,7 +23,7 @@ class getSongsTestCases(unittest.TestCase):
         self.app = app.test_client()
 
     def tearDown(self):
-        mockedMongoClient.db.songs.remove()
+        mockedMongoClient.db.songs.delete_many({})
 
     def getResult(self, rv):
         return json.loads(rv.data)['result']
