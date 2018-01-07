@@ -22,11 +22,10 @@ def returnJsonResult(result):
 
 
 def build_link(page_size, page_num, rel):
-    return "<%(url)s?page_size=%(size)d&page_num=%(num)d>; "
-    "rel='%(rel)s'" % {'url': request.base_url,
-                       'size': page_size,
-                       'num': page_num,
-                       'rel': rel}
+    return "<%(url)s?page_size=%(size)d&page_num=%(num)d>; rel='%(rel)s'" % {'url': request.base_url,
+                                                                             'size': page_size,
+                                                                             'num': page_num,
+                                                                             'rel': rel}
 
 
 # Update the response header table with X-total-count and Link
