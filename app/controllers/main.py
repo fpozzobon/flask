@@ -1,7 +1,6 @@
 from flask import Blueprint, request
 from flask_restful import Resource, Api, reqparse, abort, fields, marshal_with
 import math
-from app.exceptions import BadRequestException
 from app.song_service import songService
 
 main = Blueprint('main', __name__)
@@ -275,10 +274,6 @@ class RateSong(Resource):
         args = self.parser.parse_args(strict=True)
         rating = args['rating']
         song_id = args['song_id']
-
-        # rating should be between 1 and 5
-        if rating < 1 or rating > 5:
-            raise BadRequestException("Rating should be between 1 and 5")
 
         update_result = getSongService().rateSong(song_id, rating)
 

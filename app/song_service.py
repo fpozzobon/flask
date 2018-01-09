@@ -1,6 +1,6 @@
 import re
 import bson
-from app.exceptions import SongNotFoundException, ResourceNotFoundException
+from app.exceptions import BadRequestException, SongNotFoundException, ResourceNotFoundException
 from app.extensions import cache
 
 CACHE_TIMEOUT = 500
@@ -13,6 +13,8 @@ class SongService():
         self.logger = logger
 
     def __skip_limit(self, db_find, page_size, page_num):
+        if page_size <= 0 or page_num <= 0:
+            raise BadRequestException("page_size and page_num should be null or greater than 0 !")
         skips = page_size * (page_num - 1)
         return db_find.skip(skips).limit(page_size)
 
@@ -82,6 +84,11 @@ class SongService():
 
     def rateSong(self, song_id, rating):
         self.logger.debug('Rating the song %s with %s', song_id, rating)
+
+        # rating should be between 1 and 5
+        if rating < 1 or rating > 5:
+            raise BadRequestException("Rating should be between 1 and 5")
+
         cache.delete_memoized(self.rating, self, song_id)
         current_song = self.find(song_id)
         return self.songCollection.update_one(

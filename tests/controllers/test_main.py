@@ -213,34 +213,6 @@ class TestMainRateSong:
     def mockRateSong(self, songService, updatedExisting):
         songService.rateSong.return_value = self.createResult(updatedExisting)
 
-    def test_rate_song_less_than_1(self, main):
-        """ Verify that we don't call rateSong service """
-        # setup
-        testapp, songService = main
-        self.mockRateSong(songService, True)
-        # test
-        actual = testapp.post('/songs/rating', data=dict(
-            rating=0.314,
-            song_id="any"
-        ))
-        # verification
-        assert '<Response streamed [500 INTERNAL SERVER ERROR]>' == str(actual)
-        songService.rateSong.assert_not_called()
-
-    def test_rate_song_greater_than_5(self, main):
-        """ Verify that we don't call rateSong service """
-        # setup
-        testapp, songService = main
-        self.mockRateSong(songService, True)
-        # test
-        actual = testapp.post('/songs/rating', data=dict(
-            rating=5.314,
-            song_id="any"
-        ))
-        # verification
-        assert '<Response streamed [500 INTERNAL SERVER ERROR]>' == str(actual)
-        songService.rateSong.assert_not_called()
-
     def test_rate_song_error(self, main):
         """ Verify that we get the rating and call the service correctly """
         # setup

@@ -66,6 +66,6 @@ $ python flask_integration_tests.py
 ### Possible enhancements
 
 * [Optimisation] : use cache on main controller
-* [Database] : investigate a better way for dealing with _id
+* [Optimisation] : limit the number of result after a search or add a pagination ?
 * [Database] : parse release date as a Date
 * [Tests] : cover all the tests

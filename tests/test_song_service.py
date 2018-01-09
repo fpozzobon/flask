@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-from app.exceptions import SongNotFoundException, ResourceNotFoundException
+from app.exceptions import BadRequestException, SongNotFoundException, ResourceNotFoundException
 from tests.utils import insertNSongsInDb
 import bson
 
@@ -20,6 +20,20 @@ class TestGetList():
         # verification
         assert [] == data
         assert 0 == count
+
+    def test_get_list_with_page_size_0(self, song_service):
+        """ Verify that we get an exception """
+        # test
+        tested, mockedSongCollection, mockedCache = song_service
+        with pytest.raises(BadRequestException):
+            tested.getList(0, 20)
+
+    def test_get_list_with_page_num_0(self, song_service):
+        """ Verify that we get an exception """
+        # test
+        tested, mockedSongCollection, mockedCache = song_service
+        with pytest.raises(BadRequestException):
+            tested.getList(20, 0)
 
     def test_get_list_with_populated_db(self, song_service):
         """ Verify that we get a result from the database """
@@ -138,7 +152,7 @@ class TestRateSong:
         # test
         tested, mockedSongCollection, mockedCache = song_service
         with pytest.raises(SongNotFoundException):
-            tested.rateSong(song_id, 123)
+            tested.rateSong(song_id, 2)
 
     def __insert_valid_test_case(self, mockedSongCollection, ratings=None):
         # setup
@@ -150,7 +164,7 @@ class TestRateSong:
 
     def __verify_rate(self, tested, mockedSongCollection, ratings=None):
         # setup
-        expectedRating = 123.3
+        expectedRating = 3.3
         songToInsert = self.__insert_valid_test_case(mockedSongCollection, ratings)
         # test
         actual = tested.rateSong(song_id, expectedRating)
@@ -180,6 +194,24 @@ class TestRateSong:
         tested.rateSong(song_id, 5)
         # verification
         mockedCache.delete_memoized.assert_called_with(tested.rating, tested, song_id)
+
+    def test_rate_song_less_than_1(self, song_service):
+        """ Verify that we get an exception """
+        # setup
+        tested, mockedSongCollection, mockedCache = song_service
+        self.__insert_valid_test_case(mockedSongCollection)
+        # test
+        with pytest.raises(BadRequestException):
+            tested.rateSong(song_id, 0.5)
+
+    def test_rate_song_greater_than_5(self, song_service):
+        """ Verify that we get an exception """
+        # setup
+        tested, mockedSongCollection, mockedCache = song_service
+        self.__insert_valid_test_case(mockedSongCollection)
+        # test
+        with pytest.raises(BadRequestException):
+            tested.rateSong(song_id, 5.344)
 
 
 @pytest.mark.usefixtures("song_service")
