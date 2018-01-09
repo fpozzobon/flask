@@ -1,24 +1,38 @@
 from flask import Blueprint, request
-from flask_restful import Resource, Api, reqparse, abort
+from flask_restful import Resource, Api, reqparse, abort, fields, marshal_with
 import math
 from app.exceptions import BadRequestException
-from app.view.song import append_songs
 from app.song_service import songService
 
 main = Blueprint('main', __name__)
 api = Api(main, '/songs')
+
+envelope = 'result'
+song_fields = {
+    '_id': fields.String,
+    'artist': fields.String,
+    'title': fields.String,
+    'level': fields.String,
+    'difficulty': fields.String,
+    'released': fields.String
+}
+
+avg_fields = {
+    envelope: fields.Float
+}
+
+update_fields = {
+    'n': fields.Integer,
+    'nModified': fields.Integer,
+    'ok': fields.Float,
+    'updatedExisting': fields.Boolean
+}
 
 
 def getSongService():
     if songService is None:
         raise Exception("app.song_service.songService null !")
     return songService
-
-
-# Default json result
-# Note : consumers may prefer not having that 'result' wrap around the result
-def returnJsonResult(result):
-    return {'result': result}
 
 
 def build_link(page_size, page_num, rel):
@@ -64,6 +78,7 @@ class GetSongs(Resource):
                                  type=int,
                                  default=1)
 
+    @marshal_with(song_fields, envelope=envelope)
     def get(self):
         """Get songs
             ---
@@ -111,10 +126,9 @@ class GetSongs(Resource):
         page_size = args.get('page_size')
         page_num = args.get('page_num')
         data, count = getSongService().getList(page_size, page_num)
-        resp = append_songs(data)
-        return returnJsonResult(resp), 200, build_response_header(count,
-                                                                  page_size,
-                                                                  page_num)
+        return data, 200, build_response_header(count,
+                                                page_size,
+                                                page_num)
 
 
 api.add_resource(GetSongs, '/')
@@ -123,6 +137,7 @@ api.add_resource(GetSongs, '/')
 # GET /songs/avg/difficulty
 class AverageDifficulty(Resource):
 
+    @marshal_with(avg_fields)
     def get(self, level=None):
         """Get average of difficulty
             ---
@@ -143,7 +158,7 @@ class AverageDifficulty(Resource):
                 examples:
                   result: 12.2
         """
-        return returnJsonResult(getSongService().averageDifficulty(level))
+        return {envelope: getSongService().averageDifficulty(level)}
 
 
 api.add_resource(AverageDifficulty,
@@ -160,6 +175,7 @@ class Search(Resource):
                                  help="Missing 'message' argument !",
                                  required=True)
 
+    @marshal_with(song_fields, envelope=envelope)
     def get(self):
         """Search
             ---
@@ -188,7 +204,7 @@ class Search(Resource):
             abort(400, message="'message' parameter is missing ! "
                   "Please provide one. Example : /songs/search?message=you")
 
-        return returnJsonResult(append_songs(getSongService().search(message)))
+        return getSongService().search(message)
 
 
 api.add_resource(Search, '/search')
@@ -210,6 +226,7 @@ class RateSong(Resource):
                                  help="Missing 'rating' property to apply to the song !",
                                  required=True)
 
+    @marshal_with(update_fields)
     def post(self):
         """RateSong
             ---
@@ -269,7 +286,7 @@ class RateSong(Resource):
             return "Error when updating %(id)s, %(msg)s" % {'id': str(song_id),
                                                             'msg': update_result.raw_result},
             500
-        return returnJsonResult(str(update_result.raw_result))
+        return update_result.raw_result
 
 
 api.add_resource(RateSong, '/rating')
@@ -277,6 +294,7 @@ api.add_resource(RateSong, '/rating')
 
 # GET /songs/avg/rating/<string:song_id>
 class Rating(Resource):
+    @marshal_with(avg_fields)
     def get(self, song_id):
         """Rating
             ---
@@ -294,7 +312,7 @@ class Rating(Resource):
                     examples:
                         result: 4
         """
-        return returnJsonResult(getSongService().rating(song_id))
+        return {envelope: getSongService().rating(song_id)}
 
 
 api.add_resource(Rating, '/avg/rating/<string:song_id>')

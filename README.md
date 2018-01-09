@@ -66,7 +66,6 @@ $ python flask_integration_tests.py
 ### Possible enhancements
 
 * [Optimisation] : use cache on main controller
-* [Marshalling] : use restfull marshaller
 * [Database] : investigate a better way for dealing with _id
 * [Database] : parse release date as a Date
 * [Tests] : cover all the tests
